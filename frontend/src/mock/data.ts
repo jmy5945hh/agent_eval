@@ -1,6 +1,18 @@
+import type {
+  AgentProduct,
+  AgentVersion,
+  CaseRun,
+  ErrorInfo,
+  EvaluationCase,
+  EvaluationTask,
+  ModelConfig,
+  ScoringStandard,
+  TrajectoryEntry,
+} from '../types';
+
 // ===== Mock 数据层：Agent / 模型 / 案例 / 评分标准 / 历史任务 =====
 
-export const AGENTS = [
+export const AGENTS: AgentProduct[] = [
   {
     id: 'pi-agent',
     name: 'Pi Agent',
@@ -27,12 +39,29 @@ export const AGENTS = [
   },
 ];
 
+export const AGENT_VERSIONS: AgentVersion[] = [
+  { id: 'pi-v231', agentId: 'pi-agent', version: 'v2.3.1', releasedAt: '2026-07-08', notes: '增强仓库级检索与多文件修改稳定性', recommended: true, enabled: true },
+  { id: 'pi-v224', agentId: 'pi-agent', version: 'v2.2.4', releasedAt: '2026-06-12', notes: '生产稳定版，适合回归对比', enabled: true },
+  { id: 'pi-v210', agentId: 'pi-agent', version: 'v2.1.0', releasedAt: '2026-05-16', notes: '旧版规划器与工具调用链路', enabled: true },
+  { id: 'dev-v180', agentId: 'devagent-cli', version: 'v1.8.0', releasedAt: '2026-07-01', notes: '优化 CLI 会话恢复与日志输出', recommended: true, enabled: true },
+  { id: 'dev-v172', agentId: 'devagent-cli', version: 'v1.7.2', releasedAt: '2026-06-06', notes: '稳定版本，用于版本效果基线', enabled: true },
+  { id: 'dev-v160', agentId: 'devagent-cli', version: 'v1.6.0', releasedAt: '2026-04-28', notes: '旧版命令执行引擎', enabled: true },
+  { id: 'open-v094', agentId: 'opencode', version: 'v0.9.4', releasedAt: '2026-07-10', notes: '新增模型路由与插件隔离', recommended: true, enabled: true },
+  { id: 'open-v090', agentId: 'opencode', version: 'v0.9.0', releasedAt: '2026-06-18', notes: '稳定版插件系统', enabled: true },
+  { id: 'open-v082', agentId: 'opencode', version: 'v0.8.2', releasedAt: '2026-05-21', notes: '旧版终端交互协议', enabled: true },
+];
+
 export const MODEL_TIERS = ['Fast', 'Pro', 'Ultra'];
 
-export const MODELS = [
+export const MODELS: ModelConfig[] = [
   { id: 'm-fast', name: 'Fast-1.2', tier: 'Fast', version: '1.2.0', provider: '内部模型平台', enabled: true, scoring: false, desc: '低时延轻量模型，适合简单 CRUD 类任务。' },
+  { id: 'm-fast-code', name: 'Fast-Code', tier: 'Fast', version: '1.4.0', provider: '内部模型平台', enabled: true, scoring: false, desc: '针对代码补全与小范围修改优化。' },
   { id: 'm-pro', name: 'Pro-3.0', tier: 'Pro', version: '3.0.2', provider: '内部模型平台', enabled: true, scoring: false, desc: '均衡型主力模型，覆盖大多数编码场景。' },
+  { id: 'm-pro-code', name: 'Pro-Code', tier: 'Pro', version: '3.1.0', provider: '内部模型平台', enabled: true, scoring: false, desc: '加强仓库理解、调试与单测生成。' },
   { id: 'm-ultra', name: 'Ultra-3.5', tier: 'Ultra', version: '3.5.1', provider: '内部模型平台', enabled: true, scoring: false, desc: '旗舰推理模型，面向复杂架构与调试任务。' },
+  { id: 'm-ultra-long', name: 'Ultra-Long', tier: 'Ultra', version: '3.5.3', provider: '内部模型平台', enabled: true, scoring: false, desc: '长上下文模型，适合大型仓库分析。' },
+  { id: 'm-qwen', name: 'Qwen-Coder', tier: 'Pro', version: '2.5.1', provider: '模型开放平台', enabled: true, scoring: false, desc: '擅长多语言代码生成与中文研发场景。' },
+  { id: 'm-sonnet', name: 'Sonnet-Code', tier: 'Pro', version: '4.1.0', provider: '外部模型网关', enabled: true, scoring: false, desc: '面向复杂推理、代码审查与重构任务。' },
   { id: 'm-fast-lite', name: 'Fast-Lite', tier: 'Fast', version: '0.9.0', provider: '内部模型平台', enabled: false, scoring: false, desc: '实验性轻量模型（未启用）。' },
   { id: 'judge-pro', name: 'Judge-Pro', tier: 'Pro', version: '1.4.0', provider: '内部模型平台', enabled: true, scoring: true, desc: '独立评分模型，按评分标准输出维度分与评语。' },
   { id: 'judge-lite', name: 'Judge-Lite', tier: 'Fast', version: '1.0.3', provider: '内部模型平台', enabled: true, scoring: true, desc: '轻量评分模型，速度快、粒度略粗。' },
@@ -43,7 +72,7 @@ export const CATEGORIES = ['前端', 'Java后端', 'Python后端', 'AI智能体'
 export const DIFFICULTIES = ['高', '中', '低'];
 export const IMPORTANCES = ['高', '中', '低'];
 
-export const CASES = [
+export const CASES: EvaluationCase[] = [
   {
     id: 'C001', code: 'FE-001', name: '实现响应式商品卡片列表',
     prompt: '在仓库 mall-web 的 feature/cards 分支上，实现一个响应式商品卡片列表组件 ProductGrid：\n1. 桌面端 4 列、平板 2 列、手机 1 列；\n2. 卡片包含封面图、标题、价格与"加入购物车"按钮；\n3. 价格保留两位小数并带千分位；\n4. 无封面图时使用占位图。\n请直接修改 src/components/ProductGrid.jsx 并补充必要样式。',
@@ -169,7 +198,7 @@ export const CASES = [
 ];
 
 // ===== 评分标准（带版本管理）=====
-export const SCORING_STANDARDS = [
+export const SCORING_STANDARDS: ScoringStandard[] = [
   {
     id: 'std-v1',
     version: 'v1.0',
@@ -198,17 +227,17 @@ export const SCORING_STANDARDS = [
   },
 ];
 
-export const currentStandard = (standards) =>
+export const currentStandard = (standards: ScoringStandard[]) =>
   standards.find((s) => s.current) || standards[standards.length - 1];
 
 // ===== 执行轨迹 / 错误日志生成器（供引擎与种子任务复用）=====
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-export function genTrajectory(caseItem, ok) {
+export function genTrajectory(caseItem: EvaluationCase, ok: boolean): TrajectoryEntry[] {
   const now = Date.now();
-  const t = (offset) => new Date(now + offset).toTimeString().slice(0, 8);
-  const answer = caseItem.standardAnswer[0];
-  const msgs = [
+  const t = (offset: number) => new Date(now + offset).toTimeString().slice(0, 8);
+  const answer = caseItem.standardAnswer[0]!;
+  const msgs: TrajectoryEntry[] = [
     { role: 'user', kind: 'text', time: t(0), content: caseItem.prompt },
     { role: 'agent', kind: 'think', time: t(4_000), content: `收到任务。我先梳理仓库结构，定位与「${caseItem.name}」相关的模块，再制定修改计划。` },
     { role: 'tool', kind: 'cmd', time: t(6_000), title: '执行命令', content: `$ git clone ${caseItem.repo} -b ${caseItem.branch}\n$ tree -L 2\n.\n├── src/\n├── package.json\n└── README.md` },
@@ -239,18 +268,18 @@ export const ERROR_POOL = [
   },
 ];
 
-export function genError() {
+export function genError(): ErrorInfo {
   return pick(ERROR_POOL);
 }
 
 // ===== 历史测评任务（已完成，供记录追溯演示）=====
-function seedRuns(caseIds, failIdx, standard) {
+function seedRuns(caseIds: string[], failIdx: number[], standard: ScoringStandard): CaseRun[] {
   return caseIds.map((cid, i) => {
-    const c = CASES.find((x) => x.id === cid);
+    const c = CASES.find((x) => x.id === cid)!;
     const ok = !failIdx.includes(i);
     const err = ok ? null : genError();
     const dur = 60_000 + Math.floor(Math.random() * 240_000);
-    const run = {
+    const run: CaseRun = {
       caseId: cid,
       status: ok ? 'success' : 'failed',
       attempts: 1,
@@ -265,8 +294,8 @@ function seedRuns(caseIds, failIdx, standard) {
       score: null,
     };
     const base = ok ? 62 + Math.random() * 33 : 8 + Math.random() * 30;
-    const dims = {};
-    const comments = {};
+    const dims: Record<string, number> = {};
+    const comments: Record<string, string> = {};
     standard.dimensions.forEach((d) => {
       const v = Math.max(0, Math.min(100, Math.round(base + (Math.random() * 16 - 8))));
       dims[d.key] = v;
@@ -279,7 +308,7 @@ function seedRuns(caseIds, failIdx, standard) {
       comments,
       analysis: ok
         ? `整体实现覆盖了「${c.name}」的主要需求点，方案合理。建议补充更多边界用例验证。`
-        : `案例「${c.name}」执行失败（${err.category}），无法形成有效产出，评分按失败处理。`,
+        : `案例「${c.name}」执行失败（${err?.category || '未知错误'}），无法形成有效产出，评分按失败处理。`,
       note: '',
       edited: false,
       model: 'Judge-Pro',
@@ -289,7 +318,7 @@ function seedRuns(caseIds, failIdx, standard) {
   });
 }
 
-export function seedTasks() {
+export function seedTasks(): EvaluationTask[] {
   const std = SCORING_STANDARDS[1];
   return [
     {
@@ -320,7 +349,7 @@ export function seedTasks() {
       status: 'cancelled', phase: 'done',
       scoringModelId: null, standardVersion: null,
       scoringStatus: 'idle',
-      runs: seedRuns(['C001', 'C007'], [], std).map((r) => ({ ...r, score: null, status: r.caseId === 'C001' ? 'success' : 'cancelled' })),
+      runs: seedRuns(['C001', 'C007'], [], std).map((r) => ({ ...r, score: null, status: r.caseId === 'C001' ? 'success' as const : 'cancelled' as const })),
     },
   ];
 }
