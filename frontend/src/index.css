@@ -1,0 +1,395 @@
+/* ===== Organic × Material × Flat 设计基调 ===== */
+:root {
+  --org-bg: #f5f3ee;
+  --org-surface: #fffdf9;
+  --org-ink: #2e2b26;
+  --org-ink-2: #6f6a5e;
+  --org-primary: #4f7a5b;
+  --org-primary-deep: #3c6046;
+  --org-accent: #d9764a;
+  --org-line: #e7e2d8;
+  --org-radius: 14px;
+  --org-shadow: 0 1px 2px rgba(46, 43, 38, 0.05), 0 8px 24px rgba(46, 43, 38, 0.06);
+  --org-shadow-lg: 0 2px 6px rgba(46, 43, 38, 0.06), 0 18px 44px rgba(46, 43, 38, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--org-bg);
+  color: var(--org-ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== 通用卡片 ===== */
+.org-card {
+  background: var(--org-surface);
+  border: 1px solid var(--org-line);
+  border-radius: var(--org-radius);
+  box-shadow: var(--org-shadow);
+  padding: 20px 22px;
+}
+
+.org-card + .org-card {
+  margin-top: 16px;
+}
+
+.org-page {
+  padding: 20px 24px 40px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.org-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--org-ink);
+  margin: 4px 0 2px;
+}
+
+.org-page-sub {
+  font-size: 13px;
+  color: var(--org-ink-2);
+  margin-bottom: 16px;
+}
+
+/* ===== 登录页 ===== */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(79, 122, 91, 0.16), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(217, 118, 74, 0.14), transparent 55%),
+    var(--org-bg);
+}
+
+.login-card {
+  width: 400px;
+  background: var(--org-surface);
+  border: 1px solid var(--org-line);
+  border-radius: 20px;
+  box-shadow: var(--org-shadow-lg);
+  padding: 40px 36px 32px;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.login-logo-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px 14px 14px 4px;
+  background: linear-gradient(135deg, var(--org-primary), var(--org-primary-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ===== 布局 ===== */
+.app-sider-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 18px 14px;
+  color: var(--org-ink);
+}
+
+.app-sider-logo .mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px 11px 11px 3px;
+  background: linear-gradient(135deg, var(--org-primary), var(--org-primary-deep));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex: none;
+}
+
+.app-sider-logo .name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.app-sider-logo .sub {
+  font-size: 11px;
+  color: var(--org-ink-2);
+  font-weight: 400;
+}
+
+/* ===== 统计卡 ===== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.stat-item {
+  background: var(--org-surface);
+  border: 1px solid var(--org-line);
+  border-radius: var(--org-radius);
+  padding: 14px 16px;
+  box-shadow: var(--org-shadow);
+}
+
+.stat-item .label {
+  font-size: 12px;
+  color: var(--org-ink-2);
+  margin-bottom: 6px;
+}
+
+.stat-item .value {
+  font-size: 22px;
+  font-weight: 650;
+  color: var(--org-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-item .value.ok {
+  color: #3f7d4e;
+}
+
+.stat-item .value.bad {
+  color: #c0453b;
+}
+
+.stat-item .value.warn {
+  color: #b97908;
+}
+
+/* ===== 选择卡片（Agent / 模型） ===== */
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.pick-card {
+  border: 1.5px solid var(--org-line);
+  border-radius: var(--org-radius);
+  background: var(--org-surface);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pick-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--org-shadow-lg);
+}
+
+.pick-card.active {
+  border-color: var(--org-primary);
+  box-shadow: 0 0 0 3px rgba(79, 122, 91, 0.16);
+}
+
+.pick-card .ttl {
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pick-card .desc {
+  color: var(--org-ink-2);
+  font-size: 12.5px;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+/* ===== 执行轨迹（人机对话） ===== */
+.traj {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 2px;
+}
+
+.traj-msg {
+  display: flex;
+  gap: 10px;
+  max-width: 92%;
+}
+
+.traj-msg.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.traj-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.traj-avatar.agent {
+  background: linear-gradient(135deg, var(--org-primary), var(--org-primary-deep));
+  border-radius: 10px 10px 10px 3px;
+}
+
+.traj-avatar.user {
+  background: linear-gradient(135deg, #8a8478, #6f6a5e);
+  border-radius: 10px 10px 3px 10px;
+}
+
+.traj-bubble {
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  border: 1px solid var(--org-line);
+  background: #faf8f3;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.traj-msg.user .traj-bubble {
+  background: rgba(79, 122, 91, 0.1);
+  border-color: rgba(79, 122, 91, 0.25);
+}
+
+.traj-bubble .meta {
+  font-size: 11px;
+  color: var(--org-ink-2);
+  margin-bottom: 4px;
+}
+
+.traj-tool {
+  align-self: stretch;
+  border: 1px dashed var(--org-line);
+  border-radius: 10px;
+  background: #f7f5f0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--org-ink-2);
+}
+
+.code-block {
+  background: #2e2b26;
+  color: #e8e4da;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 8px 0 2px;
+}
+
+.code-file-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #3a362f;
+  color: #cfc9bb;
+  border-radius: 10px 10px 0 0;
+  padding: 6px 12px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+}
+
+.code-file-head + .code-block {
+  border-radius: 0 0 10px 10px;
+  margin-top: 0;
+}
+
+/* ===== 细项评分条 ===== */
+.dim-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--org-line);
+}
+
+.dim-row:last-child {
+  border-bottom: none;
+}
+
+.dim-row .d-label {
+  width: 130px;
+  flex: none;
+  font-size: 13px;
+}
+
+.dim-row .d-bar {
+  flex: 1;
+}
+
+.dim-row .d-score {
+  width: 90px;
+  flex: none;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ===== 错误日志 ===== */
+.err-log {
+  background: #fdf3f2;
+  border: 1px solid #f3d4d1;
+  color: #a33b32;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* 步骤条区域微调 */
+.step-bar {
+  background: var(--org-surface);
+  border: 1px solid var(--org-line);
+  border-radius: var(--org-radius);
+  box-shadow: var(--org-shadow);
+  padding: 18px 28px 8px;
+  margin-bottom: 16px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5cfc2;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
