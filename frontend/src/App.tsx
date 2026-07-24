@@ -24,7 +24,7 @@ import {
   ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { seedTasks } from './mock/data';
+import { SCORING_STANDARDS, seedTasks } from './mock/data';
 import type { CreateTaskPayload, EvaluationCase, EvaluationTask } from './types';
 import { DashboardPage } from './pages/DashboardPage';
 import { CreateTaskPage } from './pages/CreateTaskPage';
@@ -33,7 +33,7 @@ import { ExecutionPage } from './pages/ExecutionPage';
 import { RecordsPage } from './pages/RecordsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
-import { CaseDrawer } from './components/cases/CaseDetail';
+import { CaseDetailModal } from './components/cases/CaseDetail';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -41,12 +41,12 @@ const { Header, Sider, Content } = Layout;
 type PageKey = 'dashboard' | 'create' | 'cases' | 'execution' | 'records' | 'settings';
 
 const pageMeta: Record<PageKey, [string, string]> = {
-  dashboard: ['工作台', '掌握测评进展，快速开始新一轮智能化评估'],
-  create: ['创建测评', '选择 Agent、模型和案例，组装一次标准化测评'],
-  cases: ['案例库', '管理可复用的真实研发场景与标准答案'],
-  execution: ['执行中心', '监控任务队列、执行轨迹与自动评分'],
-  records: ['测评记录', '查询、追溯并复用每一次历史测评'],
-  settings: ['Agent 与模型', '管理参测 Agent、模型配置与评分标准'],
+  dashboard: ['工作台', ''],
+  create: ['创建测评', ''],
+  cases: ['案例库', ''],
+  execution: ['执行中心', ''],
+  records: ['测评记录', ''],
+  settings: ['Agent 与模型', ''],
 };
 
 const navItems = [
@@ -71,6 +71,7 @@ function createTaskFromPayload(payload: CreateTaskPayload): EvaluationTask {
     creator: '赵启铭',
     createdAt: now.toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-'),
     status: 'running',
+    standardVersion: SCORING_STANDARDS.find((standard) => standard.id === payload.scoringStandardId)?.version || null,
     scoringStatus: 'idle',
     runs: payload.selectedCases.map((caseId, index) => ({
       caseId,
@@ -86,7 +87,7 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [activePage, setActivePage] = useState<PageKey>('dashboard');
-  const [caseDrawer, setCaseDrawer] = useState<EvaluationCase | null>(null);
+  const [caseDetail, setCaseDetail] = useState<EvaluationCase | null>(null);
   const [taskDetail, setTaskDetail] = useState<EvaluationTask | null>(null);
   const tasks = useMemo(() => seedTasks(), []);
 
@@ -116,7 +117,7 @@ export default function App() {
       case 'create':
         return <CreateTaskPage onLaunch={launchTask} />;
       case 'cases':
-        return <CasesPage onSelectCase={setCaseDrawer} />;
+        return <CasesPage onSelectCase={setCaseDetail} />;
       case 'execution':
         return <ExecutionPage tasks={tasks} onOpenTask={openTask} onCreate={() => navigate('create')} />;
       case 'records':
@@ -194,13 +195,11 @@ export default function App() {
               <div><h1>{pageTitle}</h1><p>{pageSubtitle}</p></div>
             </div>
             <div className="header-actions">
-              <Tooltip title="全局搜索"><Button type="text" shape="circle" icon={<SearchOutlined />} /></Tooltip>
-              <Badge dot offset={[-4, 5]}><Button type="text" shape="circle" icon={<BellOutlined />} /></Badge>
               <span className="header-separator" />
               <Dropdown menu={{ items: [{ key: 'profile', icon: <UserOutlined />, label: '个人信息' }, { key: 'logout', label: '退出登录' }] }}>
                 <button className="user-menu">
                   <Avatar>赵</Avatar>
-                  <span><b>赵启铭</b><small>研发效能中心</small></span>
+                  <span><b>赵启铭</b><small></small></span>
                   <DownOutlined />
                 </button>
               </Dropdown>
@@ -209,7 +208,7 @@ export default function App() {
           <Content className="app-content">{renderPage()}</Content>
         </Layout>
       </Layout>
-      <CaseDrawer item={caseDrawer} onClose={() => setCaseDrawer(null)} />
+      <CaseDetailModal item={caseDetail} onClose={() => setCaseDetail(null)} />
     </ConfigProvider>
   );
 }

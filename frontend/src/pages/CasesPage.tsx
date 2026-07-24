@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Button, Dropdown, Table, Tag } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag, message } from 'antd';
 import {
   AppstoreOutlined,
   BranchesOutlined,
   DeleteOutlined,
   EditOutlined,
-  MoreOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import { CASES, CATEGORIES } from '../mock/data';
@@ -18,7 +17,9 @@ export function CasesPage({ onSelectCase }: { onSelectCase: (item: EvaluationCas
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [addOpen, setAddOpen] = useState(false);
-  const filtered = CASES.filter((item) => {
+  const [editingCase, setEditingCase] = useState<EvaluationCase | null>(null);
+  const [cases, setCases] = useState(CASES);
+  const filtered = cases.filter((item) => {
     const matchesCategory = category === 'all' || item.category === category;
     const text = `${item.name}${item.prompt}${item.repo}`.toLowerCase();
     return matchesCategory && text.includes(search.toLowerCase());
@@ -30,10 +31,10 @@ export function CasesPage({ onSelectCase }: { onSelectCase: (item: EvaluationCas
       dataIndex: 'name',
       width: 290,
       render: (_: string, record: EvaluationCase) => (
-        <button className="case-link" onClick={() => onSelectCase(record)}>
+        <div className="case-link">
           <span className="case-type-icon">{categoryIcons[record.category]}</span>
           <span><b>{record.name}</b><small>{record.code} · v{record.version}</small></span>
-        </button>
+        </div>
       ),
     },
     { title: '分类', dataIndex: 'category', width: 120, render: (value: string) => <Tag className="soft-tag">{value}</Tag> },
@@ -52,12 +53,25 @@ export function CasesPage({ onSelectCase }: { onSelectCase: (item: EvaluationCas
     { title: '重要性', dataIndex: 'importance', width: 100 },
     { title: '更新时间', dataIndex: 'createdAt', width: 150, render: (value: string) => value.slice(0, 10) },
     {
-      title: '',
-      width: 56,
-      render: () => (
-        <Dropdown menu={{ items: [{ key: 'edit', icon: <EditOutlined />, label: '编辑' }, { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true }] }}>
-          <Button type="text" icon={<MoreOutlined />} />
-        </Dropdown>
+      title: '操作',
+      width: 150,
+      render: (_: unknown, record: EvaluationCase) => (
+        <Space size={4} onClick={(event) => event.stopPropagation()}>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => setEditingCase(record)}>编辑</Button>
+          <Popconfirm
+            title="删除案例"
+            description={`确认删除“${record.name}”吗？`}
+            okText="删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => {
+              setCases((current) => current.filter((item) => item.id !== record.id));
+              message.success('案例已删除（Mock）');
+            }}
+          >
+            <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
@@ -66,13 +80,13 @@ export function CasesPage({ onSelectCase }: { onSelectCase: (item: EvaluationCas
     <div className="page-stack">
       <div className="category-strip">
         <button className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>
-          <span className="category-icon"><AppstoreOutlined /></span><b>全部案例</b><small>{CASES.length} 条</small>
+          <span className="category-icon"><AppstoreOutlined /></span><b>全部案例</b><small>{cases.length} 条</small>
         </button>
         {CATEGORIES.map((item) => (
           <button className={category === item ? 'active' : ''} onClick={() => setCategory(item)} key={item}>
             <span className="category-icon">{categoryIcons[item]}</span>
             <b>{item}</b>
-            <small>{CASES.filter((caseItem) => caseItem.category === item).length} 条</small>
+            <small>{cases.filter((caseItem) => caseItem.category === item).length} 条</small>
           </button>
         ))}
       </div>
@@ -82,9 +96,18 @@ export function CasesPage({ onSelectCase }: { onSelectCase: (item: EvaluationCas
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>新增案例</Button>
         </div>
         <CaseFilterBar search={search} setSearch={setSearch} category={category} setCategory={setCategory} count={filtered.length} />
-        <Table dataSource={filtered} columns={columns} rowKey="id" pagination={{ pageSize: 8, showSizeChanger: false }} scroll={{ x: 960 }} />
+        <Table
+          dataSource={filtered}
+          columns={columns}
+          rowKey="id"
+          rowClassName="clickable-case-row"
+          onRow={(record) => ({ onClick: () => onSelectCase(record) })}
+          pagination={{ pageSize: 8, showSizeChanger: false }}
+          scroll={{ x: 960 }}
+        />
       </section>
       <CaseFormModal open={addOpen} onCancel={() => setAddOpen(false)} />
+      <CaseFormModal open={Boolean(editingCase)} item={editingCase} onCancel={() => setEditingCase(null)} />
     </div>
   );
 }

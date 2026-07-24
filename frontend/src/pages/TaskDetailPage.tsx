@@ -86,7 +86,7 @@ export function TaskDetailPage({ task, onBack }: { task: EvaluationTask; onBack:
   const completed = success + failed + runs.filter((run) => run.status === 'cancelled').length;
   const progress = Math.round((completed / Math.max(runs.length, 1)) * 100);
   const agentVersion = AGENT_VERSIONS.find((version) => version.id === task.agentVersionId)
-    || AGENT_VERSIONS.find((version) => version.agentId === task.agentId && version.recommended);
+    || AGENT_VERSIONS.find((version) => version.agentId === task.agentId && version.latest);
 
   const terminateCase = (caseId: string) => {
     setRuns((current) => current.map((run) => run.caseId === caseId ? { ...run, status: 'cancelled' } : run));

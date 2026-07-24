@@ -38,9 +38,8 @@ export function DashboardPage({ tasks, onNavigate, onOpenTask }: DashboardPagePr
     <div className="page-stack">
       <section className="welcome-panel">
         <div className="welcome-copy">
-          <div className="eyebrow"><span /> AI CODING AGENT EVALUATION</div>
-          <Title level={2}>早上好，赵启铭</Title>
-          <Paragraph>今天可以从一次标准化测评开始，验证 Agent 在真实研发场景中的表现。</Paragraph>
+          <Title level={2}>Agent智能测评系统</Title>
+          <Paragraph></Paragraph>
           <Space size={12} wrap>
             <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => onNavigate('create')}>创建测评任务</Button>
             <Button size="large" icon={<BookOutlined />} onClick={() => onNavigate('cases')}>浏览案例库</Button>
@@ -57,13 +56,34 @@ export function DashboardPage({ tasks, onNavigate, onOpenTask }: DashboardPagePr
       </section>
 
       <section className="metrics-grid">
-        <MetricCard label="累计测评" value={tasks.length + 21} note="本月新增 8 次" tone="green" icon={<ExperimentOutlined />} />
-        <MetricCard label="已沉淀案例" value={CASES.length} note="覆盖 5 个研发分类" tone="blue" icon={<BookOutlined />} />
-        <MetricCard label="整体成功率" value={`${Math.round((successRuns / totalRuns) * 100)}%`} note="较上周提升 4.2%" tone="orange" icon={<CheckCircleFilled />} />
-        <MetricCard label="已接入组合" value={AGENTS.length * 8} note="3 Agents · 8 Models" tone="purple" icon={<BranchesOutlined />} />
+        <MetricCard label="累计测评" value={tasks.length + 21} note="" tone="green" icon={<ExperimentOutlined />} />
+        <MetricCard label="已沉淀案例" value={CASES.length} note="" tone="blue" icon={<BookOutlined />} />
       </section>
 
       <section className="dashboard-grid">
+        <div className="surface-card span-4">
+          <div className="section-head">
+            <div><h3>Agent Leaderboard</h3><p></p></div>
+            <BarChartOutlined className="section-icon" />
+          </div>
+          <div className="rank-list">
+            {[
+              ['Pi Agent', 'v2.3.1', 88, '#4f7a5b'],
+              ['OpenCode', 'v0.9.4', 82, '#d9764a'],
+              ['DevAgent CLI', 'v1.8.0', 76, '#71829c'],
+            ].map(([name, version, score, color], index) => (
+              <div className="rank-row" key={name}>
+                <span className={`rank-index rank-${index + 1}`}>{index + 1}</span>
+                <div className="rank-main">
+                  <div><b>{name}</b><small>{version}</small></div>
+                  <Progress percent={Number(score)} showInfo={false} strokeColor={String(color)} size="small" />
+                </div>
+                <strong>{score}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+        
         <div className="surface-card span-8">
           <div className="section-head">
             <div><h3>最近一次测评</h3><p>{recent.name}</p></div>
@@ -92,28 +112,7 @@ export function DashboardPage({ tasks, onNavigate, onOpenTask }: DashboardPagePr
           </div>
         </div>
 
-        <div className="surface-card span-4">
-          <div className="section-head">
-            <div><h3>Agent 表现</h3><p>最近 30 天平均得分</p></div>
-            <BarChartOutlined className="section-icon" />
-          </div>
-          <div className="rank-list">
-            {[
-              ['Pi Agent', 'v2.3.1', 88, '#4f7a5b'],
-              ['OpenCode', 'v0.9.4', 82, '#d9764a'],
-              ['DevAgent CLI', 'v1.8.0', 76, '#71829c'],
-            ].map(([name, version, score, color], index) => (
-              <div className="rank-row" key={name}>
-                <span className={`rank-index rank-${index + 1}`}>{index + 1}</span>
-                <div className="rank-main">
-                  <div><b>{name}</b><small>{version}</small></div>
-                  <Progress percent={Number(score)} showInfo={false} strokeColor={String(color)} size="small" />
-                </div>
-                <strong>{score}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
+        
       </section>
 
       <section className="surface-card">

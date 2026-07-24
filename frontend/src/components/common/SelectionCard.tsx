@@ -5,9 +5,9 @@ interface SelectionCardProps {
   active: boolean;
   onClick: () => void;
   title: string;
-  subtitle: string;
-  description: string;
-  meta: string;
+  subtitle?: string;
+  description?: string;
+  meta?: string;
   icon: ReactNode;
   compact?: boolean;
 }

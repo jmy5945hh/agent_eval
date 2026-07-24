@@ -17,19 +17,18 @@ export interface AgentVersion {
   version: string;
   releasedAt: string;
   notes: string;
-  recommended?: boolean;
+  latest?: boolean;
   enabled: boolean;
 }
 
 export interface ModelConfig {
   id: string;
   name: string;
-  tier: string;
-  version: string;
-  provider: string;
+  provider?: string;
+  version?: string;
+  tier?: string;
   enabled: boolean;
   scoring: boolean;
-  desc: string;
 }
 
 export interface CaseFile {
@@ -128,5 +127,6 @@ export interface CreateTaskPayload {
   agentVersionId: string;
   modelId: string;
   selectedCases: string[];
+  scoringStandardId: string;
   taskName: string;
 }

@@ -40,13 +40,13 @@ export const AGENTS: AgentProduct[] = [
 ];
 
 export const AGENT_VERSIONS: AgentVersion[] = [
-  { id: 'pi-v231', agentId: 'pi-agent', version: 'v2.3.1', releasedAt: '2026-07-08', notes: '增强仓库级检索与多文件修改稳定性', recommended: true, enabled: true },
+  { id: 'pi-v231', agentId: 'pi-agent', version: 'v2.3.1', releasedAt: '2026-07-08', notes: '增强仓库级检索与多文件修改稳定性', latest: true, enabled: true },
   { id: 'pi-v224', agentId: 'pi-agent', version: 'v2.2.4', releasedAt: '2026-06-12', notes: '生产稳定版，适合回归对比', enabled: true },
   { id: 'pi-v210', agentId: 'pi-agent', version: 'v2.1.0', releasedAt: '2026-05-16', notes: '旧版规划器与工具调用链路', enabled: true },
-  { id: 'dev-v180', agentId: 'devagent-cli', version: 'v1.8.0', releasedAt: '2026-07-01', notes: '优化 CLI 会话恢复与日志输出', recommended: true, enabled: true },
+  { id: 'dev-v180', agentId: 'devagent-cli', version: 'v1.8.0', releasedAt: '2026-07-01', notes: '优化 CLI 会话恢复与日志输出', latest: true, enabled: true },
   { id: 'dev-v172', agentId: 'devagent-cli', version: 'v1.7.2', releasedAt: '2026-06-06', notes: '稳定版本，用于版本效果基线', enabled: true },
   { id: 'dev-v160', agentId: 'devagent-cli', version: 'v1.6.0', releasedAt: '2026-04-28', notes: '旧版命令执行引擎', enabled: true },
-  { id: 'open-v094', agentId: 'opencode', version: 'v0.9.4', releasedAt: '2026-07-10', notes: '新增模型路由与插件隔离', recommended: true, enabled: true },
+  { id: 'open-v094', agentId: 'opencode', version: 'v0.9.4', releasedAt: '2026-07-10', notes: '新增模型路由与插件隔离', latest: true, enabled: true },
   { id: 'open-v090', agentId: 'opencode', version: 'v0.9.0', releasedAt: '2026-06-18', notes: '稳定版插件系统', enabled: true },
   { id: 'open-v082', agentId: 'opencode', version: 'v0.8.2', releasedAt: '2026-05-21', notes: '旧版终端交互协议', enabled: true },
 ];
@@ -54,18 +54,11 @@ export const AGENT_VERSIONS: AgentVersion[] = [
 export const MODEL_TIERS = ['Fast', 'Pro', 'Ultra'];
 
 export const MODELS: ModelConfig[] = [
-  { id: 'm-fast', name: 'Fast-1.2', tier: 'Fast', version: '1.2.0', provider: '内部模型平台', enabled: true, scoring: false, desc: '低时延轻量模型，适合简单 CRUD 类任务。' },
-  { id: 'm-fast-code', name: 'Fast-Code', tier: 'Fast', version: '1.4.0', provider: '内部模型平台', enabled: true, scoring: false, desc: '针对代码补全与小范围修改优化。' },
-  { id: 'm-pro', name: 'Pro-3.0', tier: 'Pro', version: '3.0.2', provider: '内部模型平台', enabled: true, scoring: false, desc: '均衡型主力模型，覆盖大多数编码场景。' },
-  { id: 'm-pro-code', name: 'Pro-Code', tier: 'Pro', version: '3.1.0', provider: '内部模型平台', enabled: true, scoring: false, desc: '加强仓库理解、调试与单测生成。' },
-  { id: 'm-ultra', name: 'Ultra-3.5', tier: 'Ultra', version: '3.5.1', provider: '内部模型平台', enabled: true, scoring: false, desc: '旗舰推理模型，面向复杂架构与调试任务。' },
-  { id: 'm-ultra-long', name: 'Ultra-Long', tier: 'Ultra', version: '3.5.3', provider: '内部模型平台', enabled: true, scoring: false, desc: '长上下文模型，适合大型仓库分析。' },
-  { id: 'm-qwen', name: 'Qwen-Coder', tier: 'Pro', version: '2.5.1', provider: '模型开放平台', enabled: true, scoring: false, desc: '擅长多语言代码生成与中文研发场景。' },
-  { id: 'm-sonnet', name: 'Sonnet-Code', tier: 'Pro', version: '4.1.0', provider: '外部模型网关', enabled: true, scoring: false, desc: '面向复杂推理、代码审查与重构任务。' },
-  { id: 'm-fast-lite', name: 'Fast-Lite', tier: 'Fast', version: '0.9.0', provider: '内部模型平台', enabled: false, scoring: false, desc: '实验性轻量模型（未启用）。' },
-  { id: 'judge-pro', name: 'Judge-Pro', tier: 'Pro', version: '1.4.0', provider: '内部模型平台', enabled: true, scoring: true, desc: '独立评分模型，按评分标准输出维度分与评语。' },
-  { id: 'judge-lite', name: 'Judge-Lite', tier: 'Fast', version: '1.0.3', provider: '内部模型平台', enabled: true, scoring: true, desc: '轻量评分模型，速度快、粒度略粗。' },
-];
+  { id: 'm-fast', name: 'Fast-1.2' , enabled: true, scoring: false},
+  { id: 'm-fast-code', name: 'Fast-Code', enabled: true, scoring: false },
+  { id: 'm-pro', name: 'Pro-3.0', enabled: true, scoring: false },
+  { id: 'm-pro-code', name: 'Pro-Code',enabled: true, scoring: false},
+ ];
 
 export const CATEGORIES = ['前端', 'Java后端', 'Python后端', 'AI智能体', '安全测试'];
 
