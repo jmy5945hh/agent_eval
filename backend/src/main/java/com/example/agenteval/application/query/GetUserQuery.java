@@ -14,7 +14,7 @@ public class GetUserQuery {
 
     private final UserRepository userRepository;
 
-    public Optional<UserResponse> execute(Long userId) {
+    public Optional<UserResponse> execute(Integer userId) {
         return userRepository.findById(userId)
                 .map(this::toResponse);
     }
@@ -26,8 +26,8 @@ public class GetUserQuery {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .createdAt(user.getCreateTime())
+                .updatedAt(user.getUpdateTime())
                 .build();
     }
 }

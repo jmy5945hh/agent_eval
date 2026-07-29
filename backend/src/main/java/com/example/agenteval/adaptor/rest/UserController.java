@@ -26,7 +26,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUser(@PathVariable Integer id) {
         return getUserQuery.execute(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
