@@ -4,7 +4,7 @@ import com.example.agenteval.domain.model.User;
 
 import java.util.Optional;
 
-public interface UserRepository extends BaseRepository<User, Long> {
+public interface UserRepository extends BaseRepository<User, Integer> {
 
     Optional<User> findByUsername(String username);
 
