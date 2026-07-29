@@ -28,8 +28,8 @@ public class CreateUserCommand {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .createdAt(user.getCreate_time())
+                .updatedAt(user.getUpdate_time())
                 .build();
     }
 }
