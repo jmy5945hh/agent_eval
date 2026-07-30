@@ -35,26 +35,26 @@ public class GetUserQueryTest {
                 .phone("1234567890")
                 .status(1)
                 .build();
-        user.setId(1L);
+        user.setId(1);
     }
 
     @Test
     public void execute_shouldReturnUserResponse_whenUserExists() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
-        Optional<UserResponse> response = getUserQuery.execute(1L);
+        Optional<UserResponse> response = getUserQuery.execute(1);
 
         assertTrue(response.isPresent());
-        assertEquals(Long.valueOf(1L), response.get().getId());
+        assertEquals(Integer.valueOf(1), response.get().getId());
         assertEquals("testuser", response.get().getUsername());
         assertEquals("test@example.com", response.get().getEmail());
     }
 
     @Test
     public void execute_shouldReturnEmpty_whenUserNotExists() {
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999)).thenReturn(Optional.empty());
 
-        Optional<UserResponse> response = getUserQuery.execute(999L);
+        Optional<UserResponse> response = getUserQuery.execute(999);
 
         assertFalse(response.isPresent());
     }

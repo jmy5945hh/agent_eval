@@ -43,7 +43,7 @@ public class CreateUserCommandTest {
                 .phone("1234567890")
                 .status(1)
                 .build();
-        savedUser.setId(1L);
+        savedUser.setId(1);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class CreateUserCommandTest {
         UserResponse response = createUserCommand.execute(request);
 
         assertNotNull(response);
-        assertEquals(Long.valueOf(1L), response.getId());
+        assertEquals(Integer.valueOf(1), response.getId());
         assertEquals("testuser", response.getUsername());
         assertEquals("test@example.com", response.getEmail());
         assertEquals("1234567890", response.getPhone());

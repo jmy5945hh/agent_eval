@@ -32,7 +32,7 @@ public class UserDomainServiceTest {
                 .phone("1234567890")
                 .status(1)
                 .build();
-        user.setId(1L);
+        user.setId(1);
     }
 
     @Test

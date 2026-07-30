@@ -46,7 +46,7 @@ public class UserControllerTest {
     @Before
     public void setUp() {
         userResponse = UserResponse.builder()
-                .id(1L)
+                .id(1)
                 .username("testuser")
                 .email("test@example.com")
                 .phone("1234567890")
@@ -110,7 +110,7 @@ public class UserControllerTest {
 
     @Test
     public void getUser_shouldReturn200_whenUserExists() throws Exception {
-        when(getUserQuery.execute(1L)).thenReturn(Optional.of(userResponse));
+        when(getUserQuery.execute(1)).thenReturn(Optional.of(userResponse));
 
         mockMvc.perform(get("/api/users/1")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -121,7 +121,7 @@ public class UserControllerTest {
 
     @Test
     public void getUser_shouldReturn404_whenUserNotExists() throws Exception {
-        when(getUserQuery.execute(999L)).thenReturn(Optional.empty());
+        when(getUserQuery.execute(999)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/users/999")
                         .contentType(MediaType.APPLICATION_JSON))
