@@ -18,7 +18,7 @@ public class AgentInfoPO extends BaseEntity {
     /**
      * Agent 名称（如 Pi Agent）,;
      */
-    @Column(nullable = true, length = 30)
+    @Column(nullable = true, length = 30, name = "agent_name")
     private String agentName;
     /**
      * 默认版本号（如 v2.3.1）,;
@@ -33,7 +33,7 @@ public class AgentInfoPO extends BaseEntity {
     /**
      * agent启动命令,;
      */
-    @Column(nullable = true, length = 200)
+    @Column(nullable = true, length = 200, name = "start_cmd")
     private String startCmd;
     /**
      * 状态: 1-enabled,0-disabled,;

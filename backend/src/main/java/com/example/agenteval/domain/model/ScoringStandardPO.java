@@ -23,7 +23,7 @@ public class ScoringStandardPO extends BaseEntity {
     /**
      * 是否为当前使用版本,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "is_current")
     private byte isCurrent;
     /**
      * 版本说明,;

@@ -18,12 +18,12 @@ public class ModelConfigPO extends BaseEntity {
     /**
      * 模型名称
      */
-    @Column(nullable = true, length = 50)
+    @Column(nullable = true, length = 50, name = "model_name")
     private String modelName;
     /**
      * 模型类型:1-mode，2-name,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "model_type")
     private int modelType;
     /**
      * 模型请求地址,;

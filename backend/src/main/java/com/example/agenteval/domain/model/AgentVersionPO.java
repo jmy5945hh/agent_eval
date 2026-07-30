@@ -15,7 +15,7 @@ import javax.persistence.Table;
 @Table(name = "agent_version")
 public class AgentVersionPO extends BaseEntity {
 
-    @Column(nullable = true)
+    @Column(nullable = true, name = "agent_id")
     private int agentId;
     /**
      * 版本号（如 v2.3.1）,;

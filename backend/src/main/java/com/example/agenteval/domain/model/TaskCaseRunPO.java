@@ -18,12 +18,12 @@ public class TaskCaseRunPO extends BaseEntity {
     /**
      * 所属任务业务 ID,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "task_id")
     private int taskId;
     /**
      * 测评案例业务 ID,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "case_id")
     private int caseId;
     /**
      * 1-queued 2-running 3-success 4-failed 5-cancelled,;
@@ -43,12 +43,12 @@ public class TaskCaseRunPO extends BaseEntity {
     /**
      * 输入 Token 数,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "tokens_in")
     private int tokensIn;
     /**
      * 输出 Token 数,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "tokens_out")
     private int tokensOut;
     /**
      * 执行耗时（毫秒）,;
@@ -58,11 +58,11 @@ public class TaskCaseRunPO extends BaseEntity {
     /**
      * 错误信息对象存储键值,;
      */
-    @Column(nullable = true, length = 50)
+    @Column(nullable = true, length = 50, name = "error_info_key")
     private String errorInfoKey;
     /**
      * 执行轨迹对象存储键值,;
      */
-    @Column(nullable = true, length = 50)
+    @Column(nullable = true, length = 50, name = "trajectory_key")
     private String trajectoryKey;
 }
