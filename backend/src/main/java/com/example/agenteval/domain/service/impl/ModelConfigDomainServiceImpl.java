@@ -1,12 +1,21 @@
 package com.example.agenteval.domain.service.impl;
 
+import cn.hutool.core.util.ObjUtil;
 import com.example.agenteval.application.dto.ModelConfigRequest;
+import com.example.agenteval.application.dto.ModelListRequest;
+import com.example.agenteval.application.dto.response.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.ModelConfigPORespository;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
+import com.example.agenteval.infrastructure.enums.ModelCallTypeEnum;
+import com.example.agenteval.infrastructure.util.EnumUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,13 +57,18 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
     @Transactional
     public ModelConfigPO createModel(ModelConfigRequest request) {
         // 名称唯一性校验
-        if (modelConfigRepository.existsByModelName(request.getName())) {
-            throw new IllegalArgumentException("模型名称已存在: " + request.getName());
+        if (modelConfigRepository.existsByModelName(request.getModelName())) {
+            throw new IllegalArgumentException("模型名称已存在: " + request.getModelName());
+        }
+        //校验类型
+        ModelCallTypeEnum enumByField = EnumUtil.findEnumByField(ModelCallTypeEnum.class, ModelCallTypeEnum.TYPE_STATIC_NAME, request.getModelType());
+        if (ObjUtil.isNull(enumByField)) {
+            throw new IllegalArgumentException("模型类型不正确：" + request.getModelType());
         }
 
         ModelConfigPO model = ModelConfigPO.builder()
-                .modelName(request.getName())
-                .modelType(mapModelType(request.getModelType()))
+                .modelName(request.getModelName())
+                .modelType(request.getModelType())
                 .endpoint(request.getEndpoint())
                 .authorization(request.getAuthorization())
                 .version(request.getVersion())
@@ -75,20 +89,26 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
      */
     @Override
     @Transactional
-    public ModelConfigPO updateModel(Long id, ModelConfigRequest request) {
-        ModelConfigPO model = modelConfigRepository.findById(id.intValue())
+    public ModelConfigPO updateModel(Integer id, ModelConfigRequest request) {
+        ModelConfigPO model = modelConfigRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("模型不存在: " + id));
 
         // 若修改了名称，校验唯一性（排除自身）
-        if (request.getName() != null && !request.getName().equals(model.getModelName())) {
-            if (modelConfigRepository.existsByModelName(request.getName())) {
-                throw new IllegalArgumentException("模型名称已存在: " + request.getName());
+        if (request.getModelName() != null && !request.getModelName().equals(model.getModelName())) {
+            if (modelConfigRepository.existsByModelName(request.getModelName())) {
+                throw new IllegalArgumentException("模型名称已存在: " + request.getModelName());
             }
-            model.setModelName(request.getName());
+            model.setModelName(request.getModelName());
+        }
+
+        //校验类型
+        ModelCallTypeEnum enumByField = EnumUtil.findEnumByField(ModelCallTypeEnum.class, ModelCallTypeEnum.TYPE_STATIC_NAME, request.getModelType());
+        if (ObjUtil.isNull(enumByField)) {
+            throw new IllegalArgumentException("模型类型不正确：" + request.getModelType());
         }
 
         if (request.getModelType() != null) {
-            model.setModelType(mapModelType(request.getModelType()));
+            model.setModelType(request.getModelType());
         }
         if (request.getEndpoint() != null) {
             model.setEndpoint(request.getEndpoint());
@@ -124,43 +144,32 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
      */
     @Override
     @Transactional
-    public void deleteModel(Long id) {
-        int modelId = id.intValue();
-
+    public void deleteModel(Integer id) {
         // 检查是否被测评任务引用（作为执行模型）
-        if (evaluationTaskRepository.existsByModelId(modelId)) {
+        if (evaluationTaskRepository.existsByModelId(id)) {
             throw new IllegalStateException("该模型已被测评任务引用，无法删除");
         }
 
         // 检查是否被评分任务引用（作为评分模型）
-        if (evaluationTaskRepository.existsByScoringModelId(modelId)) {
+        if (evaluationTaskRepository.existsByScoringModelId(id)) {
             throw new IllegalStateException("该模型已被评分任务引用，无法删除");
         }
 
-        modelConfigRepository.deleteById(modelId);
+        modelConfigRepository.deleteById(id);
         log.info("Model deleted: id={}", id);
+    }
+
+    @Override
+    public Page<ModelListResponse> modelList(ModelListRequest request) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+        Page<ModelConfigPO> byModelName = modelConfigRepository.findByModelName(request.getModelName(), pageable);
+        Page<ModelListResponse> map = byModelName.map(ModelListResponse::from);
+        return map;
     }
 
     // ==================== 辅助方法 ====================
 
-    /**
-     * 将 modelType 字符串映射为 int。
-     * <ul>
-     *   <li>openai → 1</li>
-     *   <li>anthropic → 2</li>
-     *   <li>local → 3</li>
-     *   <li>默认（含 null）→ 1</li>
-     * </ul>
-     */
-    private int mapModelType(String modelType) {
-        if (modelType == null) return 1;
-        switch (modelType.toLowerCase()) {
-            case "openai":    return 1;
-            case "anthropic": return 2;
-            case "local":     return 3;
-            default:          return 1;
-        }
-    }
 
     /**
      * 将 Boolean 映射为 byte。

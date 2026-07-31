@@ -23,6 +23,14 @@ public class CommonResponse<T> {
                 .build();
     }
 
+    public static CommonResponse success() {
+        return CommonResponse.builder()
+                .code(200)
+                .message("success")
+                .data("")
+                .build();
+    }
+
     public static <T> CommonResponse<T> error(Integer code, String message) {
         return CommonResponse.<T>builder()
                 .code(code)

@@ -1,7 +1,10 @@
 package com.example.agenteval.domain.service;
 
 import com.example.agenteval.application.dto.ModelConfigRequest;
+import com.example.agenteval.application.dto.ModelListRequest;
+import com.example.agenteval.application.dto.response.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
+import org.springframework.data.domain.Page;
 
 /**
  * 模型配置领域服务接口 — 负责模型的新增、修改、删除。
@@ -30,7 +33,7 @@ public interface ModelConfigDomainService {
      * @param request 编辑请求
      * @return 更新后的模型实体
      */
-    ModelConfigPO updateModel(Long id, ModelConfigRequest request);
+    ModelConfigPO updateModel(Integer id, ModelConfigRequest request);
 
     /**
      * 删除模型配置。
@@ -38,5 +41,13 @@ public interface ModelConfigDomainService {
      *
      * @param id 模型 ID
      */
-    void deleteModel(Long id);
+    void deleteModel(Integer id);
+
+    /**
+     * 根据模型名称分页查询
+     *
+     * @param request
+     * @return
+     */
+    Page<ModelListResponse> modelList(ModelListRequest request);
 }

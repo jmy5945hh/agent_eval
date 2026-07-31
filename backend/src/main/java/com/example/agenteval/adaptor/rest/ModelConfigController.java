@@ -1,10 +1,13 @@
 package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.ModelConfigRequest;
+import com.example.agenteval.application.dto.ModelListRequest;
+import com.example.agenteval.application.dto.response.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,38 +33,50 @@ public class ModelConfigController {
      * 新增模型配置。
      */
     @PostMapping
-    public ResponseEntity<CommonResponse<ModelConfigPO>> createModel(
+    public ResponseEntity<CommonResponse<Void>> createModel(
             @Valid @RequestBody ModelConfigRequest request) {
-        log.info("Creating model: name={}, scoring={}", request.getName(), request.getScoring());
-        ModelConfigPO created = modelConfigDomainService.createModel(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.success(created));
+        log.info("Creating model: name={}, scoring={}", request.getModelName(), request.getScoring());
+        modelConfigDomainService.createModel(request);
+        return ResponseEntity.ok(CommonResponse.success());
     }
 
     /**
      * 编辑模型配置。若 authorization 字段为空或脱敏值则不更新 Key。
      */
     @PutMapping("/{id}")
-    public CommonResponse<ModelConfigPO> updateModel(
-            @PathVariable Long id,
+    public ResponseEntity<CommonResponse<Void>> updateModel(
+            @PathVariable Integer id,
             @Valid @RequestBody ModelConfigRequest request) {
-        log.info("Updating model: id={}, name={}", id, request.getName());
+        log.info("Updating model: id={}, name={}", id, request.getModelName());
         ModelConfigPO updated = modelConfigDomainService.updateModel(id, request);
-        return CommonResponse.success(updated);
+        return ResponseEntity.ok(CommonResponse.success());
     }
 
     /**
      * 删除模型配置。被测评任务或评分任务引用时返回 409。
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<Void>> deleteModel(@PathVariable Long id) {
+    public ResponseEntity<CommonResponse<Void>> deleteModel(@PathVariable Integer id) {
         log.info("Deleting model: id={}", id);
         try {
             modelConfigDomainService.deleteModel(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(CommonResponse.success());
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(CommonResponse.<Void>builder().code(409).message(e.getMessage()).build());
         }
+    }
+
+    /**
+     * 分页查询
+     *
+     * @param request
+     * @return
+     */
+    @PostMapping("/list")
+    public ResponseEntity<CommonResponse<Page<ModelListResponse>>> modelList(@Valid @RequestBody ModelListRequest request) {
+        Page<ModelListResponse> modelListResponses = modelConfigDomainService.modelList(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.success(modelListResponses));
     }
 }

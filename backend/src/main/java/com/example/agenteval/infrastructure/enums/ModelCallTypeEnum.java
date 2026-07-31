@@ -16,6 +16,8 @@ public enum ModelCallTypeEnum {
     NAME(2, "name"),
     ;
 
+    public static final String TYPE_STATIC_NAME = "type";
+
     private final Integer type;
 
     private final String type_name;
