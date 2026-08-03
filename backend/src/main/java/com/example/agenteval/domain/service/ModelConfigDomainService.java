@@ -1,8 +1,9 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.ModelConfigRequest;
-import com.example.agenteval.application.dto.ModelListRequest;
-import com.example.agenteval.application.dto.response.ModelListResponse;
+import com.example.agenteval.application.dto.request.model.ModelConfigRequest;
+import com.example.agenteval.application.dto.request.model.ModelListRequest;
+import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
+import com.example.agenteval.application.dto.response.model.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import org.springframework.data.domain.Page;
 
@@ -50,4 +51,11 @@ public interface ModelConfigDomainService {
      * @return
      */
     Page<ModelListResponse> modelList(ModelListRequest request);
+
+    /**
+     * 根据id查询模型信息
+     * @param id
+     * @return
+     */
+    ModelInfoResponse modelInfo(Integer id);
 }

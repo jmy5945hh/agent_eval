@@ -1,8 +1,9 @@
 package com.example.agenteval.adaptor.rest;
 
-import com.example.agenteval.application.dto.ModelConfigRequest;
-import com.example.agenteval.application.dto.ModelListRequest;
-import com.example.agenteval.application.dto.response.ModelListResponse;
+import com.example.agenteval.application.dto.request.model.ModelConfigRequest;
+import com.example.agenteval.application.dto.request.model.ModelListRequest;
+import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
+import com.example.agenteval.application.dto.response.model.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
 import lombok.RequiredArgsConstructor;
@@ -78,5 +79,14 @@ public class ModelConfigController {
         Page<ModelListResponse> modelListResponses = modelConfigDomainService.modelList(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success(modelListResponses));
+    }
+
+    /**
+     * 根据id查询模型信息
+     * @return
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<CommonResponse<ModelInfoResponse>> modelInfo(@PathVariable("id") Integer id){
+        return ResponseEntity.ok(CommonResponse.success(modelConfigDomainService.modelInfo(id)));
     }
 }

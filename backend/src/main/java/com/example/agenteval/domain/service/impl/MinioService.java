@@ -1,7 +1,8 @@
-package com.example.agenteval.domain.service;
+package com.example.agenteval.domain.service.impl;
 
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
+import com.example.agenteval.domain.service.OSService;
 import com.example.agenteval.infrastructure.config.MinioConfig;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
@@ -19,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class MinioService {
+public class MinioService implements OSService {
 
     public static MinioClient minioClient;
     private final MinioConfig minioConfig;
@@ -43,6 +44,7 @@ public class MinioService {
      * @param context
      * @return
      */
+    @Override
     public String createAndUploadFile(String context) {
         String fileName = IdUtil.simpleUUID();
         try (InputStream inputStream = new ByteArrayInputStream(context.getBytes())) {
@@ -66,6 +68,7 @@ public class MinioService {
      * @param fileName
      * @param inputStream
      */
+    @Override
     public void uploadFile(String fileName, InputStream inputStream) {
         try {
             minioClient.putObject(
@@ -86,6 +89,7 @@ public class MinioService {
      *
      * @param fileName
      */
+    @Override
     public InputStream getFile(String fileName) {
         try {
             return minioClient.getObject(
@@ -105,6 +109,7 @@ public class MinioService {
      * @param fileName
      * @return
      */
+    @Override
     public String getAndReadFile(String fileName) {
         try (InputStream inputStream = minioClient.getObject(
                 GetObjectArgs.builder()
@@ -123,6 +128,7 @@ public class MinioService {
      *
      * @param fileName
      */
+    @Override
     public void deleteFile(String fileName) {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder().bucket(minioConfig.getBucket())

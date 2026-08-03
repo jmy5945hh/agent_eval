@@ -1,5 +1,6 @@
-package com.example.agenteval.application.dto;
+package com.example.agenteval.application.dto.request.model;
 
+import com.example.agenteval.application.dto.BasePageRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

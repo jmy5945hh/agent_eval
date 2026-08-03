@@ -1,4 +1,4 @@
-package com.example.agenteval.application.dto.response;
+package com.example.agenteval.application.dto.response.model;
 
 import com.example.agenteval.domain.model.ModelConfigPO;
 import lombok.AllArgsConstructor;
@@ -12,6 +12,14 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ModelListResponse {
 
+    /**
+     * 主键id
+     */
+    private Integer id;
+
+    /**
+     * 模型名称
+     */
     private String modelName;
 
     /**
@@ -33,7 +41,7 @@ public class ModelListResponse {
     private String description;
 
     public static ModelListResponse from(ModelConfigPO modelConfigPO) {
-        return ModelListResponse.builder().modelName(modelConfigPO.getModelName())
+        return ModelListResponse.builder().modelName(modelConfigPO.getModelName()).id(modelConfigPO.getId())
                 .version(modelConfigPO.getVersion()).enabled(1 == modelConfigPO.getEnabled())
                 .scoring(1 == modelConfigPO.getScoring()).description(modelConfigPO.getDescription()).build();
     }

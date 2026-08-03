@@ -1,13 +1,16 @@
 package com.example.agenteval.domain.service.impl;
 
 import cn.hutool.core.util.ObjUtil;
-import com.example.agenteval.application.dto.ModelConfigRequest;
-import com.example.agenteval.application.dto.ModelListRequest;
-import com.example.agenteval.application.dto.response.ModelListResponse;
+import com.example.agenteval.application.dto.request.model.ModelConfigRequest;
+import com.example.agenteval.application.dto.request.model.ModelListRequest;
+import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
+import com.example.agenteval.application.dto.response.model.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.ModelConfigPORespository;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
+import com.example.agenteval.domain.service.OSService;
+import com.example.agenteval.domain.service.mapstruct.ModelConfigMapper;
 import com.example.agenteval.infrastructure.enums.ModelCallTypeEnum;
 import com.example.agenteval.infrastructure.util.EnumUtil;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +48,8 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
 
     private final ModelConfigPORespository modelConfigRepository;
     private final EvaluationTaskPORespository evaluationTaskRepository;
+    private final ModelConfigMapper modelConfigMapper;
+    private final OSService osService;
 
     // ==================== 模型 CRUD ====================
 
@@ -164,8 +169,15 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
         Page<ModelConfigPO> byModelName = modelConfigRepository.findByModelName(request.getModelName(), pageable);
-        Page<ModelListResponse> map = byModelName.map(ModelListResponse::from);
-        return map;
+        /*Page<ModelListResponse> map = byModelName.map(ModelListResponse::from);*/
+        return byModelName.map(modelConfigMapper ::toListResponse);
+    }
+
+    @Override
+    public ModelInfoResponse modelInfo(Integer id) {
+        ModelConfigPO model = modelConfigRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("模型不存在: " + id));
+        return modelConfigMapper.toResponse(model);
     }
 
     // ==================== 辅助方法 ====================

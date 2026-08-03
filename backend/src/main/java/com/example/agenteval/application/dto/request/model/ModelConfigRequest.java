@@ -1,4 +1,4 @@
-package com.example.agenteval.application.dto;
+package com.example.agenteval.application.dto.request.model;
 
 import lombok.Data;
 import org.hibernate.validator.constraints.Range;
