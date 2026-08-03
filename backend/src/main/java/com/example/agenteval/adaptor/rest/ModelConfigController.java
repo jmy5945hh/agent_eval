@@ -4,6 +4,7 @@ import com.example.agenteval.application.dto.request.model.ModelConfigRequest;
 import com.example.agenteval.application.dto.request.model.ModelListRequest;
 import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
 import com.example.agenteval.application.dto.response.model.ModelListResponse;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
 import lombok.RequiredArgsConstructor;

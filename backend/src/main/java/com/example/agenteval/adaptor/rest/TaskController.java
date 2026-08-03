@@ -4,6 +4,7 @@ import com.example.agenteval.application.dto.AddCasesRequest;
 import com.example.agenteval.application.dto.ScoreRequest;
 import com.example.agenteval.application.dto.TaskCreateRequest;
 import com.example.agenteval.application.dto.TaskResponse;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.service.TaskDomainService;
 import com.example.agenteval.infrastructure.executor.AgentExecutorService;

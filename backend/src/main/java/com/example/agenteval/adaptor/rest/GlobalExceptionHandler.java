@@ -1,5 +1,6 @@
 package com.example.agenteval.adaptor.rest;
 
+import com.example.agenteval.application.dto.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

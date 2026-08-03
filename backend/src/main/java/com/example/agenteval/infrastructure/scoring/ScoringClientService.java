@@ -174,7 +174,7 @@ public class ScoringClientService {
             sb.append("### 标准答案（参考）\n");
             for (CaseFile f : standardAnswer) {
                 sb.append(String.format("**文件 %s**:\n```\n%s\n```\n\n",
-                        f.getPath(), f.getContent()));
+                        f.getPath(), readMultipartFileContent(f.getFile())));
             }
         }
         sb.append("### 评分要求\n请根据以上维度对 Agent 的执行结果进行评分（0-100 分），"
@@ -284,6 +284,16 @@ public class ScoringClientService {
         } catch (Exception e) {
             log.error("Failed to parse scoring dimensions", e);
             return null;
+        }
+    }
+
+    private String readMultipartFileContent(org.springframework.web.multipart.MultipartFile file) {
+        if (file == null || file.isEmpty()) return "";
+        try {
+            return new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.warn("Failed to read multipart file content", e);
+            return "";
         }
     }
 }

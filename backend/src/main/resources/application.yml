@@ -8,9 +8,17 @@ spring:
   # ============ MySQL 数据源 ============
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://114.66.28.183:49543/agent_eval?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://114.66.28.183:49543/agent_eval?useUnicode=true&characterEncoding=utf-8&useSSL=false&sslMode=DISABLED&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectTimeout=30000&socketTimeout=60000
     username: agent_eval
     password: agent_eval_%123
+    hikari:
+      connection-timeout: 30000
+      validation-timeout: 10000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-test-query: SELECT 1
 
   # ============ Redis 配置 ============
   redis:

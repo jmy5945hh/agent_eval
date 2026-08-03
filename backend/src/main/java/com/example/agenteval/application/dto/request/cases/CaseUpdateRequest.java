@@ -1,18 +1,19 @@
-package com.example.agenteval.application.dto;
+package com.example.agenteval.application.dto.request.cases;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.List;
 
 @Data
-public class CaseCreateRequest {
+public class CaseUpdateRequest {
+    private int caseId;
+
     @NotBlank(message = "案例名称不能为空")
     @Size(max = 20, message = "案例名称不超过 20 字")
-    private String name;
-
-    private String code;
+    private String caseName;
 
     @NotBlank(message = "Prompt 描述不能为空")
     private String prompt;
@@ -30,14 +31,14 @@ public class CaseCreateRequest {
     private String importance;
     private String remark;
 
-    private List<CaseFileItem> standardAnswers;
+    private List<StandardAnswerItem> standardAnswers;
 
     @Data
-    public static class CaseFileItem {
+    public static class StandardAnswerItem {
         @NotBlank(message = "文件路径不能为空")
         private String path;
 
         @NotBlank(message = "文件内容不能为空")
-        private String content;
+        private MultipartFile file;
     }
 }

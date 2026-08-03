@@ -1,7 +1,7 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.CaseCreateRequest;
-import com.example.agenteval.application.dto.CaseUpdateRequest;
+import com.example.agenteval.application.dto.request.cases.CaseCreateRequest;
+import com.example.agenteval.application.dto.request.cases.CaseUpdateRequest;
 import com.example.agenteval.domain.model.EvaluationCasePO;
 import com.example.agenteval.domain.model.pojo.CaseFile;
 
@@ -24,7 +24,7 @@ public interface CaseDomainService {
 
     /**
      * 新增案例。
-     * <p>自动分配 case code（如 FE-001），将 prompt 和标准答案文件保存到对象存储。</p>
+     * <p>将 prompt 和标准答案文件保存到对象存储。</p>
      *
      * @param request 创建请求
      * @return 创建后的案例实体
@@ -35,11 +35,10 @@ public interface CaseDomainService {
      * 编辑案例。
      * <p>若 Prompt 或 standardAnswers 发生变更，caseVersion 自动 +1。</p>
      *
-     * @param caseId  案例 ID
      * @param request 编辑请求
      * @return 更新后的案例实体
      */
-    EvaluationCasePO updateCase(Long caseId, CaseUpdateRequest request);
+    EvaluationCasePO updateCase(CaseUpdateRequest request);
 
     /**
      * 删除案例。
@@ -48,18 +47,6 @@ public interface CaseDomainService {
      * @param caseId 案例 ID
      */
     void deleteCase(Long caseId);
-
-    // ==================== 标准答案管理 ====================
-
-    /**
-     * 上传/替换案例的标准答案文件列表。
-     * <p>将文件保存到对象存储，更新 EvaluationCase.standardAnswerKey。</p>
-     *
-     * @param caseId 案例 ID
-     * @param files  标准答案文件列表（全量替换）
-     * @return 保存后的文件列表
-     */
-    List<CaseFile> saveStandardAnswers(Long caseId, List<CaseFile> files);
 
     // ==================== 关联查询 ====================
 

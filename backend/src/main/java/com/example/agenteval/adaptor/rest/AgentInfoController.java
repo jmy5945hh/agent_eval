@@ -1,6 +1,7 @@
 package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.AgentRequest;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.AgentInfoPO;
 import com.example.agenteval.domain.model.AgentVersionPO;
 import com.example.agenteval.domain.service.AgentDomainService;

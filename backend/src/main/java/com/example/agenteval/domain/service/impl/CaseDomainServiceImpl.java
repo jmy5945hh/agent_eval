@@ -1,7 +1,7 @@
 package com.example.agenteval.domain.service.impl;
 
-import com.example.agenteval.application.dto.CaseCreateRequest;
-import com.example.agenteval.application.dto.CaseUpdateRequest;
+import com.example.agenteval.application.dto.request.cases.CaseCreateRequest;
+import com.example.agenteval.application.dto.request.cases.CaseUpdateRequest;
 import com.example.agenteval.domain.model.EvaluationCasePO;
 import com.example.agenteval.domain.model.TaskCaseRunPO;
 import com.example.agenteval.domain.model.pojo.CaseFile;
@@ -44,21 +44,20 @@ public class CaseDomainServiceImpl implements CaseDomainService {
 
     /**
      * 新增案例。
-     * <p>自动生成案例编号（如 FE-001），默认 version=1、difficulty=中、category=前端。
-     * Prompt 和标准答案文件保存到对象存储。</p>
      */
     @Override
     @Transactional
     public EvaluationCasePO createCase(CaseCreateRequest request) {
         EvaluationCasePO entity = EvaluationCasePO.builder()
-                .caseName(request.getName())
+                .caseName(request.getCaseName())
+                .promptKey("")
                 .repo(request.getRepo())
                 .branch(request.getBranch())
                 .category(mapCategory(request.getCategory()))
                 .difficulty(mapDifficulty(request.getDifficulty()))
                 .importance(mapImportance(request.getImportance()))
                 .caseVersion(1)
-                .remark(request.getRemark())
+                .remark(request.getRemark() != null ? request.getRemark() : "")
                 .build();
 
         EvaluationCasePO saved = caseRepository.save(entity);
@@ -73,7 +72,7 @@ public class CaseDomainServiceImpl implements CaseDomainService {
         // 保存标准答案到对象存储
         if (request.getStandardAnswers() != null && !request.getStandardAnswers().isEmpty()) {
             List<CaseFile> files = request.getStandardAnswers().stream()
-                    .map(item -> new CaseFile(item.getPath(), item.getContent()))
+                    .map(item -> new CaseFile(item.getPath(), item.getFile()))
                     .collect(Collectors.toList());
             try {
                 caseContentService.saveStandardAnswer(saved, files);
@@ -95,9 +94,9 @@ public class CaseDomainServiceImpl implements CaseDomainService {
      */
     @Override
     @Transactional
-    public EvaluationCasePO updateCase(Long caseId, CaseUpdateRequest request) {
-        EvaluationCasePO entity = caseRepository.findById(caseId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("案例不存在: " + caseId));
+    public EvaluationCasePO updateCase(CaseUpdateRequest request) {
+        EvaluationCasePO entity = caseRepository.findById(request.getCaseId())
+                .orElseThrow(() -> new IllegalArgumentException("案例不存在: " + request.getCaseId()));
 
         // 检测 prompt 是否变更
         boolean promptChanged = !Objects.equals(request.getPrompt(),
@@ -109,13 +108,13 @@ public class CaseDomainServiceImpl implements CaseDomainService {
             entity.setCaseVersion(newVersion);
         }
 
-        entity.setCaseName(request.getName());
+        entity.setCaseName(request.getCaseName());
         entity.setRepo(request.getRepo());
         entity.setBranch(request.getBranch());
         entity.setCategory(mapCategory(request.getCategory()));
         entity.setDifficulty(mapDifficulty(request.getDifficulty()));
         entity.setImportance(mapImportance(request.getImportance()));
-        entity.setRemark(request.getRemark());
+        entity.setRemark(request.getRemark() != null ? request.getRemark() : "");
 
         caseRepository.save(entity);
 
@@ -123,23 +122,23 @@ public class CaseDomainServiceImpl implements CaseDomainService {
         try {
             caseContentService.savePrompt(entity, request.getPrompt());
         } catch (Exception e) {
-            log.warn("Failed to save prompt for case {}", caseId, e);
+            log.warn("Failed to save prompt for case {}", request.getCaseId(), e);
         }
 
         // 全量替换标准答案
         if (request.getStandardAnswers() != null && !request.getStandardAnswers().isEmpty()) {
             List<CaseFile> files = request.getStandardAnswers().stream()
-                    .map(item -> new CaseFile(item.getPath(), item.getContent()))
+                    .map(item -> new CaseFile(item.getPath(), item.getFile()))
                     .collect(Collectors.toList());
             try {
                 caseContentService.saveStandardAnswer(entity, files);
             } catch (Exception e) {
-                log.warn("Failed to save standard answers for case {}", caseId, e);
+                log.warn("Failed to save standard answers for case {}", request.getCaseId(), e);
             }
         }
 
         caseRepository.save(entity);
-        log.info("Case updated: id={}, name={}, version={}", caseId, entity.getCaseName(), entity.getCaseVersion());
+        log.info("Case updated: id={}, name={}, version={}", request.getCaseId(), entity.getCaseName(), entity.getCaseVersion());
         return entity;
     }
 
@@ -158,29 +157,6 @@ public class CaseDomainServiceImpl implements CaseDomainService {
         }
         caseRepository.deleteById(caseId.intValue());
         log.info("Case deleted: id={}", caseId);
-    }
-
-    // ==================== 标准答案管理 ====================
-
-    /**
-     * 上传/替换案例的标准答案文件列表（全量替换）。
-     * <p>文件保存到对象存储，同时更新 EvaluationCase.standardAnswerKey。</p>
-     */
-    @Override
-    @Transactional
-    public List<CaseFile> saveStandardAnswers(Long caseId, List<CaseFile> files) {
-        EvaluationCasePO entity = caseRepository.findById(caseId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("案例不存在: " + caseId));
-
-        List<CaseFile> safeFiles = files != null ? files : new ArrayList<>();
-        try {
-            caseContentService.saveStandardAnswer(entity, safeFiles);
-        } catch (Exception e) {
-            log.warn("Failed to save standard answers for case {}", caseId, e);
-        }
-        caseRepository.save(entity);
-        log.info("Saved {} standard answer files for case {}", safeFiles.size(), caseId);
-        return safeFiles;
     }
 
     // ==================== 关联查询 ====================

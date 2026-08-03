@@ -1,5 +1,6 @@
 package com.example.agenteval.adaptor.rest;
 
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.TaskCaseRunPO;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.TrajectoryEntry;

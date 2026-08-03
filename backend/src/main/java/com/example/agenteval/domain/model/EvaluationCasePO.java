@@ -61,14 +61,4 @@ public class EvaluationCasePO extends BaseEntity {
      */
     @Column(nullable = true, length = 200)
     private String remark;
-    /**
-     * 标准答案的文件路径,;
-     */
-    @Column(nullable = true, length = 100, name = "file_path")
-    private String filePath;
-    /**
-     * 标准答案的对象存储 URI（如 s3://bucket/cases/C001/standard_answer.json）,;
-     */
-    @Column(nullable = true, length = 50, name = "standard_answer_key")
-    private String standardAnswerKey;
 }

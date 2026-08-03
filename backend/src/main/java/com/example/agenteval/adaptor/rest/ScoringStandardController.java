@@ -1,6 +1,7 @@
 package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.ScoringStandardRequest;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.ScoringStandardPO;
 import com.example.agenteval.domain.service.ScoringStandardDomainService;
 import lombok.RequiredArgsConstructor;

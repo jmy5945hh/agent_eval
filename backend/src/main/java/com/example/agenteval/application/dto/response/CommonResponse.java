@@ -1,4 +1,4 @@
-package com.example.agenteval.adaptor.rest;
+package com.example.agenteval.application.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

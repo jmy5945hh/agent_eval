@@ -1,6 +1,6 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.PageResponse;
+import com.example.agenteval.application.dto.response.PageResponse;
 import com.example.agenteval.application.dto.TaskResponse;
 
 import java.time.LocalDateTime;

@@ -1,11 +1,10 @@
 package com.example.agenteval.adaptor.rest;
 
-import com.example.agenteval.application.dto.CaseCreateRequest;
-import com.example.agenteval.application.dto.CaseUpdateRequest;
-import com.example.agenteval.application.dto.PageResponse;
-import com.example.agenteval.application.dto.StandardAnswerUploadRequest;
+import com.example.agenteval.application.dto.request.cases.CaseCreateRequest;
+import com.example.agenteval.application.dto.request.cases.CaseUpdateRequest;
+import com.example.agenteval.application.dto.response.PageResponse;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.EvaluationCasePO;
-import com.example.agenteval.domain.model.pojo.CaseFile;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
 import com.example.agenteval.domain.service.CaseDomainService;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
@@ -42,63 +40,78 @@ public class CaseController {
      */
     @GetMapping("/paged")
     public CommonResponse<PageResponse<EvaluationCasePO>> listPaged(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "createdAt") String sortBy) {
+            @RequestParam(defaultValue = "id") String sortBy) {
+        boolean hasFilter = (category != null && !category.isEmpty())
+                || (difficulty != null && !difficulty.isEmpty())
+                || (keyword != null && !keyword.isEmpty());
 
-        Specification<EvaluationCasePO> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (category != null && !category.isEmpty()) {
-                predicates.add(cb.equal(root.get("category"), category));
-            }
-            if (difficulty != null && !difficulty.isEmpty()) {
-                predicates.add(cb.equal(root.get("difficulty"), mapDifficulty(difficulty)));
-            }
-            if (keyword != null && !keyword.isEmpty()) {
-                String pattern = "%" + keyword.toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("name")), pattern),
-                        cb.like(cb.lower(root.get("repo")), pattern)
-                ));
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+        // page 参数为 1-indexed，转为 Spring Data 的 0-indexed
+        int pageIndex = Math.max(0, page - 1);
+        Page<EvaluationCasePO> result;
+        if (hasFilter) {
+            Specification<EvaluationCasePO> spec = (root, query, cb) -> {
+                List<Predicate> predicates = new ArrayList<>();
+                if (category != null && !category.isEmpty()) {
+                    predicates.add(cb.equal(root.get("category"), mapCategoryInt(category)));
+                }
+                if (difficulty != null && !difficulty.isEmpty()) {
+                    predicates.add(cb.equal(root.get("difficulty"), mapDifficulty(difficulty)));
+                }
+                if (keyword != null && !keyword.isEmpty()) {
+                    String pattern = "%" + keyword.toLowerCase() + "%";
+                    predicates.add(cb.or(
+                            cb.like(cb.lower(root.get("caseName")), pattern),
+                            cb.like(cb.lower(root.get("repo")), pattern)
+                    ));
+                }
+                return cb.and(predicates.toArray(new Predicate[0]));
+            };
+            result = caseRepository.findAll(spec, buildPageRequest(pageIndex, size, sortBy));
+        } else {
+            result = caseRepository.findAll(buildPageRequest(pageIndex, size, sortBy));
+        }
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        if ("name".equals(sortBy)) sort = Sort.by(Sort.Direction.ASC, "name");
-        if ("difficulty".equals(sortBy)) sort = Sort.by(Sort.Direction.ASC, "difficulty");
-
-        Page<EvaluationCasePO> result = caseRepository.findAll(spec, PageRequest.of(page, size, sort));
         return CommonResponse.success(PageResponse.of(
-                result.getContent(), result.getTotalElements(), page + 1, size));
+                result.getContent(), result.getTotalElements(), page, size));
+    }
+
+    private PageRequest buildPageRequest(int page, int size, String sortBy) {
+        Sort sort;
+        switch (sortBy) {
+            case "caseName":   sort = Sort.by(Sort.Direction.ASC, "caseName"); break;
+            case "difficulty": sort = Sort.by(Sort.Direction.ASC, "difficulty"); break;
+            case "createTime": sort = Sort.by(Sort.Direction.DESC, "createTime"); break;
+            default:           sort = Sort.by(Sort.Direction.DESC, "id"); break;
+        }
+        return PageRequest.of(page, size, sort);
     }
 
     // ==================== 案例 CRUD ====================
 
     /**
-     * 新增案例。自动生成案例编号，默认 version=1, difficulty=中。
+     * 新增案例（支持在创建时直接上传标准答案文件）。自动生成案例编号，默认 version=1。
+     * 使用 multipart/form-data 格式，标准答案文件通过 standardAnswers[0].file 等字段上传。
      */
-    @PostMapping
-    public ResponseEntity<CommonResponse<EvaluationCasePO>> createCase(
-            @Valid @RequestBody CaseCreateRequest request) {
-        log.info("Creating case: name={}, category={}", request.getName(), request.getCategory());
+    @PostMapping(path = "/createCase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public CommonResponse<EvaluationCasePO> createCase(@Valid @ModelAttribute CaseCreateRequest request) {
+        log.info("Creating case: name={}, category={}", request.getCaseName(), request.getCategory());
         EvaluationCasePO created = caseDomainService.createCase(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.success(created));
+        return CommonResponse.success(created);
     }
 
     /**
      * 编辑案例。Prompt 或标准答案变更时 caseVersion 自动 +1。
+     * 使用 multipart/form-data 格式，标准答案文件通过 standardAnswers[0].content 等字段上传。
      */
-    @PutMapping("/{caseId}")
-    public CommonResponse<EvaluationCasePO> updateCase(
-            @PathVariable Long caseId,
-            @Valid @RequestBody CaseUpdateRequest request) {
-        log.info("Updating case: id={}, name={}, category={}", caseId, request.getName(), request.getCategory());
-        EvaluationCasePO updated = caseDomainService.updateCase(caseId, request);
+    @PostMapping(path = "/updateCase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public CommonResponse<EvaluationCasePO> updateCase(@Valid @ModelAttribute CaseUpdateRequest request) {
+        log.info("Updating case: id={}, name={}, category={}", request.getCaseId(), request.getCaseName(), request.getCategory());
+        EvaluationCasePO updated = caseDomainService.updateCase(request);
         return CommonResponse.success(updated);
     }
 
@@ -106,53 +119,39 @@ public class CaseController {
      * 删除案例。有关联任务时若未传 force=true 则返回 409。
      */
     @DeleteMapping("/{caseId}")
-    public ResponseEntity<CommonResponse<Void>> deleteCase(
+    public CommonResponse<Void> deleteCase(
             @PathVariable Long caseId,
             @RequestParam(defaultValue = "false") boolean force) {
         List<String> refs = caseDomainService.getReferencedTaskIds(caseId);
         if (!refs.isEmpty() && !force) {
-            Map<String, Object> body = new LinkedHashMap<>();
-            body.put("referencedTasks", refs);
-            body.put("message", "该案例被 " + refs.size() + " 个测评任务引用，确认删除？");
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(CommonResponse.<Void>builder().code(409)
-                            .message("案例被 " + refs.size() + " 个任务引用").build());
+            return CommonResponse.<Void>builder()
+                    .code(409)
+                    .message("案例被 " + refs.size() + " 个任务引用，无法删除")
+                    .data(null)
+                    .build();
         }
         log.info("Deleting case: id={}, force={}", caseId, force);
         caseDomainService.deleteCase(caseId);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ==================== 关联任务查询 ====================
-
-    /**
-     * 查询案例被哪些测评任务引用，用于删除前依赖检查。
-     */
-    @GetMapping("/{caseId}/tasks")
-    public CommonResponse<Map<String, Object>> getCaseTasks(@PathVariable Long caseId) {
-        List<String> refs = caseDomainService.getReferencedTaskIds(caseId);
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("caseId", caseId);
-        result.put("count", refs.size());
-        result.put("taskIds", refs);
-        return CommonResponse.success(result);
-    }
-
-    // ==================== 标准答案管理 ====================
-
-    /**
-     * 上传/替换案例的标准答案文件。
-     */
-    @PostMapping("/{caseId}/standard-answers")
-    public CommonResponse<List<CaseFile>> uploadStandardAnswers(
-            @PathVariable Long caseId,
-            @Valid @RequestBody StandardAnswerUploadRequest request) {
-        log.info("Uploading {} standard answer files for case {}", request.getFiles().size(), caseId);
-        List<CaseFile> saved = caseDomainService.saveStandardAnswers(caseId, request.getFiles());
-        return CommonResponse.success(saved);
+        return CommonResponse.success(null);
     }
 
     // ==================== 辅助方法 ====================
+
+    /**
+     * 将中文分类映射为数据库存储的整数值。
+     * 1=前端, 2=Java后端, 3=Python后端, 4=AI智能体, 5=安全测试
+     */
+    private Integer mapCategoryInt(String category) {
+        if (category == null) return 1;
+        switch (category) {
+            case "前端":     return 1;
+            case "Java后端":  return 2;
+            case "Python后端": return 3;
+            case "AI智能体":  return 4;
+            case "安全测试":  return 5;
+            default:        return 1;
+        }
+    }
 
     /**
      * 将中文难度映射为数据库存储的整数值。

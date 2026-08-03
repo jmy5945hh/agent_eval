@@ -1,7 +1,8 @@
 package com.example.agenteval.adaptor.rest;
 
-import com.example.agenteval.application.dto.PageResponse;
+import com.example.agenteval.application.dto.response.PageResponse;
 import com.example.agenteval.application.dto.TaskResponse;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.service.ExportService;
 import com.example.agenteval.domain.service.RecordQueryService;
 import lombok.RequiredArgsConstructor;
