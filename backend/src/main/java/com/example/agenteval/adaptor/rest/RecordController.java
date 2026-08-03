@@ -1,12 +1,12 @@
 package com.example.agenteval.adaptor.rest;
 
-import com.example.agenteval.application.dto.response.PageResponse;
-import com.example.agenteval.application.dto.TaskResponse;
+import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.service.ExportService;
 import com.example.agenteval.domain.service.RecordQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +32,7 @@ public class RecordController {
      * 分页查询历史测评记录，支持 agentId、modelId、status 和创建时间范围筛选。
      */
     @GetMapping
-    public CommonResponse<PageResponse<TaskResponse>> listRecords(
+    public CommonResponse<Page<TaskResponse>> listRecords(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String agentId,
@@ -44,7 +44,7 @@ public class RecordController {
         log.info("Listing records: page={}, size={}, agentId={}, modelId={}, status={}",
                 page, size, agentId, modelId, status);
 
-        PageResponse<TaskResponse> result = recordQueryService.listRecords(
+        Page<TaskResponse> result = recordQueryService.listRecords(
                 page, size, agentId, modelId, status, dateFrom, dateTo);
         return CommonResponse.success(result);
     }

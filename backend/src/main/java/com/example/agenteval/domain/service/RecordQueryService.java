@@ -1,7 +1,7 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.response.PageResponse;
-import com.example.agenteval.application.dto.TaskResponse;
+import com.example.agenteval.application.dto.response.task.TaskResponse;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 
@@ -32,10 +32,10 @@ public interface RecordQueryService {
      * @param dateTo   结束时间（可选）
      * @return 分页结果
      */
-    PageResponse<TaskResponse> listRecords(int page, int size,
-                                           String agentId, String modelId,
-                                           String status,
-                                           LocalDateTime dateFrom, LocalDateTime dateTo);
+    Page<TaskResponse> listRecords(int page, int size,
+                                   String agentId, String modelId,
+                                   String status,
+                                   LocalDateTime dateFrom, LocalDateTime dateTo);
 
     /**
      * 查询测评记录详情。

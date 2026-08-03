@@ -2,7 +2,6 @@ package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.request.cases.CaseCreateRequest;
 import com.example.agenteval.application.dto.request.cases.CaseUpdateRequest;
-import com.example.agenteval.application.dto.response.PageResponse;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.EvaluationCasePO;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
@@ -39,8 +38,8 @@ public class CaseController {
      * 分页查询案例列表，支持 category、difficulty、keyword 筛选和 sortBy 排序。
      */
     @GetMapping("/paged")
-    public CommonResponse<PageResponse<EvaluationCasePO>> listPaged(
-            @RequestParam(defaultValue = "1") int page,
+    public CommonResponse<Page<EvaluationCasePO>> listPaged(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String difficulty,
@@ -50,8 +49,6 @@ public class CaseController {
                 || (difficulty != null && !difficulty.isEmpty())
                 || (keyword != null && !keyword.isEmpty());
 
-        // page 参数为 1-indexed，转为 Spring Data 的 0-indexed
-        int pageIndex = Math.max(0, page - 1);
         Page<EvaluationCasePO> result;
         if (hasFilter) {
             Specification<EvaluationCasePO> spec = (root, query, cb) -> {
@@ -71,13 +68,12 @@ public class CaseController {
                 }
                 return cb.and(predicates.toArray(new Predicate[0]));
             };
-            result = caseRepository.findAll(spec, buildPageRequest(pageIndex, size, sortBy));
+            result = caseRepository.findAll(spec, buildPageRequest(page, size, sortBy));
         } else {
-            result = caseRepository.findAll(buildPageRequest(pageIndex, size, sortBy));
+            result = caseRepository.findAll(buildPageRequest(page, size, sortBy));
         }
 
-        return CommonResponse.success(PageResponse.of(
-                result.getContent(), result.getTotalElements(), page, size));
+        return CommonResponse.success(result);
     }
 
     private PageRequest buildPageRequest(int page, int size, String sortBy) {

@@ -1,7 +1,6 @@
 package com.example.agenteval.domain.service.impl;
 
-import com.example.agenteval.application.dto.response.PageResponse;
-import com.example.agenteval.application.dto.TaskResponse;
+import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.domain.model.EvaluationTaskPO;
 import com.example.agenteval.domain.model.TaskCaseRunPO;
 import com.example.agenteval.domain.model.TaskCaseScorePO;
@@ -15,6 +14,7 @@ import com.example.agenteval.domain.service.RecordQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -54,7 +54,7 @@ public class RecordQueryServiceImpl implements RecordQueryService {
      * <p>通过 {@link Specification} 动态构建筛选条件，按创建时间倒序排列。</p>
      */
     @Override
-    public PageResponse<TaskResponse> listRecords(int page, int size,
+    public Page<TaskResponse> listRecords(int page, int size,
                                                    String agentId, String modelId,
                                                    String status,
                                                    LocalDateTime dateFrom, LocalDateTime dateTo) {
@@ -77,7 +77,7 @@ public class RecordQueryServiceImpl implements RecordQueryService {
                 predicates.add(cb.lessThanOrEqualTo(root.get("createTime"), dateTo));
             }
 
-            return cb.and(predicates.toArray(new Predicate[0]));
+            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
 
         // 按创建时间倒序
@@ -89,7 +89,7 @@ public class RecordQueryServiceImpl implements RecordQueryService {
                 .collect(Collectors.toList());
 
         log.debug("Listed records: page={}, size={}, total={}", page, size, result.getTotalElements());
-        return PageResponse.of(list, result.getTotalElements(), page + 1, size);
+        return new PageImpl<>(list, pageRequest, result.getTotalElements());
     }
 
     // ==================== 详情查询 ====================
