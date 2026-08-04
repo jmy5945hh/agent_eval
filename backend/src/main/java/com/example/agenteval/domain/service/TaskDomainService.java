@@ -1,8 +1,8 @@
 package com.example.agenteval.domain.service;
 
 import com.example.agenteval.application.dto.ScoreRequest;
-import com.example.agenteval.application.dto.TaskCreateRequest;
-import com.example.agenteval.application.dto.TaskResponse;
+import com.example.agenteval.application.dto.request.task.TaskCreateRequest;
+import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.domain.model.EvaluationTaskPO;
 import com.example.agenteval.domain.model.TaskCaseRunPO;
 import com.example.agenteval.domain.model.pojo.CaseRun;
