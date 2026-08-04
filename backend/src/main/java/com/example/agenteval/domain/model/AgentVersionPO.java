@@ -32,4 +32,10 @@ public class AgentVersionPO extends BaseEntity {
      */
     @Column(nullable = true)
     private byte enabled;
+
+    /**
+     * 配置文件内容在对象存储路径
+     */
+    @Column(nullable = true, name = "content_os_path", length = 100)
+    private String contentOsPath;
 }

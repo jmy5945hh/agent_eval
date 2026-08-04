@@ -1,14 +1,26 @@
 package com.example.agenteval.domain.service.impl;
 
-import com.example.agenteval.application.dto.AgentRequest;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
+import com.example.agenteval.application.dto.BasePageRequest;
+import com.example.agenteval.application.dto.request.agent.*;
+import com.example.agenteval.application.dto.response.agent.AgentListResponse;
+import com.example.agenteval.application.dto.response.agent.AgentVersionListResponse;
 import com.example.agenteval.domain.model.AgentInfoPO;
 import com.example.agenteval.domain.model.AgentVersionPO;
 import com.example.agenteval.domain.repository.AgentInfoPORespository;
 import com.example.agenteval.domain.repository.AgentVersionPORespository;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.service.AgentDomainService;
+import com.example.agenteval.domain.service.OSService;
+import com.example.agenteval.domain.service.mapstruct.AgentMapper;
+import com.example.agenteval.infrastructure.util.MapUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,32 +46,133 @@ public class AgentDomainServiceImpl implements AgentDomainService {
     private final AgentInfoPORespository agentInfoRepository;
     private final AgentVersionPORespository agentVersionRepository;
     private final EvaluationTaskPORespository evaluationTaskRepository;
+    private final OSService osService;
+    private final AgentMapper agentMapper;
 
     // ==================== Agent 管理 ====================
 
     /**
      * 新增 Agent 产品。
-     * <p>校验 name 全局唯一，status 默认 enabled（值为 1）。</p>
      */
     @Override
     @Transactional
-    public AgentInfoPO createAgent(AgentRequest request) {
+    public void createAgent(AgentCreateRequest request) {
         // name 全局唯一校验
-        if (agentInfoRepository.existsByAgentName(request.getName())) {
-            throw new IllegalArgumentException("Agent 名称已存在: " + request.getName());
+        if (agentInfoRepository.existsByAgentName(request.getAgentName())) {
+            throw new IllegalArgumentException("Agent 名称已存在: " + request.getAgentName());
         }
 
-        AgentInfoPO agent = AgentInfoPO.builder()
-                .agentName(request.getName())
-                .version(request.getVersion())
-                .description(request.getDescription())
-                .startCmd(request.getStartCmd())
-                .enabled(mapStatus(request.getStatus()))
-                .build();
-
-        AgentInfoPO saved = agentInfoRepository.save(agent);
+        AgentInfoPO agentInfoPO = AgentInfoPO.builder().agentName(request.getAgentName()).description(request.getDescription())
+                .startCmd(request.getStartCmd()).enabled(MapUtil.mapBoolean(request.getEnabled(), true))
+                .defaultAgent(MapUtil.mapBoolean(request.getDefaultAgent(), false))
+                .configPath(request.getConfigPath()).build();
+        AgentInfoPO saved = agentInfoRepository.save(agentInfoPO);
+        if (request.getDefaultAgent()) {
+            agentInfoRepository.updateDefaultAgentExceptId(agentInfoPO.getId(), MapUtil.mapBoolean(null, false));
+        }
         log.info("Agent created: id={}, name={}", saved.getId(), saved.getAgentName());
-        return saved;
+    }
+
+
+    @Override
+    @Transactional
+    public void createAgentVersion(Integer agentId, AgentVersionCreateRequest request) {
+        AgentInfoPO agent = agentInfoRepository.findById(agentId).orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
+
+        if (agentVersionRepository.existsByAgentIdAndVersion(agentId, request.getVersion())) {
+            throw new IllegalArgumentException("Agent 版本已存在: " + request.getVersion());
+        }
+
+        String osFile = osService.createAndUploadFile(request.getConfigContent());
+        try {
+            AgentVersionPO agentVersionPO = AgentVersionPO.builder().agentId(agentId).version(request.getVersion()).notes(request.getNotes()).enabled(MapUtil.mapBoolean(request.getEnabled(), true)).contentOsPath(osFile).build();
+
+            agentVersionRepository.save(agentVersionPO);
+            if (request.getDefaultVersion()) {
+                agent.setVersion(request.getVersion());
+                agentInfoRepository.save(agent);
+            }
+        } catch (Exception e) {
+            osService.deleteFile(osFile);
+            log.error("insert agent version error delete os file :agentId={}, agentVersion={}, osFile={}", agentId, request.getVersion(), osFile);
+            throw new RuntimeException("插入agent版本信息异常");
+        }
+        log.info("Agent version created: agentId={}, agentVersion={}", agentId, request.getVersion());
+    }
+
+    @Override
+    @Transactional
+    public void updateAgentVersion(Integer agentId, Integer agentVersionId, AgentVersionUpdateRequest request) {
+        AgentInfoPO agent = agentInfoRepository.findById(agentId).orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
+        AgentVersionPO agentVersionPO = agentVersionRepository.findById(agentVersionId).orElseThrow(() -> new IllegalArgumentException("Agent 版本不存在: " + agentVersionId));
+
+        // 若修改版本号，校验同一 Agent 下的唯一性
+        if (StrUtil.isNotBlank(request.getVersion()) && !request.getVersion().equals(agentVersionPO.getVersion())) {
+            if (agentVersionRepository.existsByAgentIdAndVersion(agentId, request.getVersion())) {
+                throw new IllegalArgumentException("版本号 " + request.getVersion() + " 在该 Agent 下已存在");
+            }
+            agentVersionPO.setVersion(request.getVersion());
+        }
+
+        if (StrUtil.isNotBlank(request.getNotes())) {
+            agentVersionPO.setNotes(request.getNotes());
+        }
+
+        String osFile = "";
+        String oldFile = "";
+        if (StrUtil.isNotBlank(agentVersionPO.getContentOsPath())) {
+            oldFile = agentVersionPO.getContentOsPath();
+            if (StrUtil.isNotBlank(request.getConfigContent())) {
+                osFile = osService.createAndUploadFile(request.getConfigContent());
+                agentVersionPO.setContentOsPath(osFile);
+            }
+        }
+        if (ObjUtil.isNotNull(request.getEnabled())) {
+            agentVersionPO.setEnabled(MapUtil.mapBoolean(request.getEnabled(), true));
+        }
+        try {
+            agentVersionRepository.save(agentVersionPO);
+            if (ObjUtil.isNotNull(request.getDefaultVersion()) && request.getDefaultVersion()) {
+                agent.setVersion(request.getVersion());
+                agentInfoRepository.save(agent);
+            }
+        } catch (Exception e) {
+            log.error("update agent version error delete os file :agentId={}, agentVersion={}, osFile={}", agentId, request.getVersion(), osFile);
+            throw new RuntimeException("更新agent版本信息异常");
+        }
+        if (StrUtil.isNotBlank(oldFile)) {
+            osService.deleteFile(oldFile);
+        }
+
+    }
+
+    @Override
+    public Page<AgentListResponse> agentList(AgentListRequest request) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+        Page<AgentInfoPO> agentInfoPOS = agentInfoRepository.findByAgentName(request.getAgentName(), pageable);
+        return agentInfoPOS.map(agentMapper::toListResponse);
+    }
+
+    @Override
+    public AgentListResponse agentInfo(Integer agentId) {
+        AgentInfoPO agent = agentInfoRepository.findById(agentId).orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
+        return agentMapper.toListResponse(agent);
+    }
+
+    @Override
+    public Page<AgentVersionListResponse> agentVersionList(Integer agentId, BasePageRequest basePageRequest) {
+        agentInfoRepository.findById(agentId).orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(basePageRequest.getPage(), basePageRequest.getSize(), sort);
+        Page<AgentVersionPO> agentVersionPOS = agentVersionRepository.findByAgentId(agentId, pageable);
+        return agentVersionPOS.map(agentMapper::toListResponse);
+    }
+
+    @Override
+    public AgentVersionListResponse agentVersionInfo(Integer agentVersionId) {
+        AgentVersionPO agentVersionPO = agentVersionRepository.findById(agentVersionId).orElseThrow(() -> new IllegalArgumentException("Agent 版本不存在: " + agentVersionId));
+        return agentMapper.toListResponse(agentVersionPO);
     }
 
     /**
@@ -68,28 +181,38 @@ public class AgentDomainServiceImpl implements AgentDomainService {
      */
     @Override
     @Transactional
-    public AgentInfoPO updateAgent(Long agentId, AgentRequest request) {
-        AgentInfoPO agent = agentInfoRepository.findById(agentId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
+    public void updateAgent(Integer agentId, AgentUpdateRequest request) {
+        AgentInfoPO agent = agentInfoRepository.findById(agentId).orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
 
         // 若修改了 name，校验唯一性（排除自身）
-        if (!request.getName().equals(agent.getAgentName())) {
-            if (agentInfoRepository.existsByAgentName(request.getName())) {
-                throw new IllegalArgumentException("Agent 名称已存在: " + request.getName());
+        if (StrUtil.isNotBlank(request.getAgentName()) && !request.getAgentName().equals(agent.getAgentName())) {
+            if (agentInfoRepository.existsByAgentName(request.getAgentName())) {
+                throw new IllegalArgumentException("Agent 名称已存在: " + request.getAgentName());
             }
         }
-
-        agent.setAgentName(request.getName());
-        agent.setVersion(request.getVersion());
-        agent.setDescription(request.getDescription());
-        agent.setStartCmd(request.getStartCmd());
-        if (request.getStatus() != null) {
-            agent.setEnabled(mapStatus(request.getStatus()));
+        if (StrUtil.isNotBlank(request.getAgentName())) {
+            agent.setAgentName(request.getAgentName());
         }
-
+        if (StrUtil.isNotBlank(request.getDescription())) {
+            agent.setDescription(request.getDescription());
+        }
+        if (StrUtil.isNotBlank(request.getStartCmd())) {
+            agent.setStartCmd(request.getStartCmd());
+        }
+        if (ObjUtil.isNotNull(request.getEnabled())) {
+            agent.setEnabled(MapUtil.mapBoolean(request.getEnabled(), true));
+        }
+        if (StrUtil.isNotBlank(request.getConfigPath())) {
+            agent.setConfigPath(request.getConfigPath());
+        }
+        if (ObjUtil.isNotNull(request.getDefaultAgent())) {
+            agent.setDefaultAgent(MapUtil.mapBoolean(request.getDefaultAgent(), false));
+        }
         AgentInfoPO saved = agentInfoRepository.save(agent);
+        if (ObjUtil.isNotNull(request.getDefaultAgent()) && request.getDefaultAgent()) {
+            agentInfoRepository.updateDefaultAgentExceptId(agent.getId(), MapUtil.mapBoolean(null, false));
+        }
         log.info("Agent updated: id={}, name={}", agentId, saved.getAgentName());
-        return saved;
     }
 
     /**
@@ -99,85 +222,21 @@ public class AgentDomainServiceImpl implements AgentDomainService {
      */
     @Override
     @Transactional
-    public void deleteAgent(Long agentId) {
+    public void deleteAgent(Integer agentId) {
         // 检查是否被测评任务引用
-        if (evaluationTaskRepository.existsByAgentId(agentId.intValue())) {
+        if (evaluationTaskRepository.existsByAgentId(agentId)) {
             throw new IllegalStateException("该 Agent 已被测评任务引用，无法删除");
         }
 
         // 清理关联的版本记录
-        List<AgentVersionPO> versions = agentVersionRepository.findByAgentId(agentId.intValue());
+        List<AgentVersionPO> versions = agentVersionRepository.findByAgentId(agentId);
         if (!versions.isEmpty()) {
             agentVersionRepository.deleteAll(versions);
             log.info("Deleted {} versions for agent: {}", versions.size(), agentId);
         }
 
-        agentInfoRepository.deleteById(agentId.intValue());
+        agentInfoRepository.deleteById(agentId);
         log.info("Agent deleted: id={}", agentId);
-    }
-
-    // ==================== Agent 版本管理 ====================
-
-    /**
-     * 为指定 Agent 新增一个版本。
-     * <p>校验 Agent 存在性及版本号在同一 Agent 下的唯一性。
-     * enabled 为 null 时默认启用（值为 1）。</p>
-     */
-    @Override
-    @Transactional
-    public AgentVersionPO addVersion(Long agentId, String version, String notes, Boolean enabled) {
-        // 校验 Agent 存在
-        agentInfoRepository.findById(agentId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
-
-        // 校验版本号唯一性
-        if (agentVersionRepository.existsByAgentIdAndVersion(agentId.intValue(), version)) {
-            throw new IllegalArgumentException(
-                    "版本号 " + version + " 在该 Agent 下已存在");
-        }
-
-        AgentVersionPO entity = AgentVersionPO.builder()
-                .agentId(agentId.intValue())
-                .version(version)
-                .notes(notes != null ? notes : "")
-                .enabled(mapEnabled(enabled))
-                .build();
-
-        AgentVersionPO saved = agentVersionRepository.save(entity);
-        log.info("Version added: id={}, agentId={}, version={}", saved.getId(), agentId, version);
-        return saved;
-    }
-
-    /**
-     * 编辑 Agent 版本信息。
-     * <p>若修改了版本号，需校验新版本号未被同 Agent 下其他版本占用。
-     * 各字段为 null 时保持原值不变。</p>
-     */
-    @Override
-    @Transactional
-    public AgentVersionPO updateVersion(Long versionId, String version, String notes, Boolean enabled) {
-        AgentVersionPO entity = agentVersionRepository.findById(versionId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("版本不存在: " + versionId));
-
-        // 若修改版本号，校验同一 Agent 下的唯一性
-        if (version != null && !version.equals(entity.getVersion())) {
-            if (agentVersionRepository.existsByAgentIdAndVersion(entity.getAgentId(), version)) {
-                throw new IllegalArgumentException(
-                        "版本号 " + version + " 在该 Agent 下已存在");
-            }
-            entity.setVersion(version);
-        }
-
-        if (notes != null) {
-            entity.setNotes(notes);
-        }
-        if (enabled != null) {
-            entity.setEnabled(mapEnabled(enabled));
-        }
-
-        AgentVersionPO saved = agentVersionRepository.save(entity);
-        log.info("Version updated: id={}, version={}", versionId, saved.getVersion());
-        return saved;
     }
 
     /**
@@ -185,52 +244,16 @@ public class AgentDomainServiceImpl implements AgentDomainService {
      */
     @Override
     @Transactional
-    public void deleteVersion(Long versionId) {
-        if (!agentVersionRepository.existsById(versionId.intValue())) {
-            throw new IllegalArgumentException("版本不存在: " + versionId);
+    public void deleteVersion(Integer agentVersionId) {
+        if (!agentVersionRepository.existsById(agentVersionId)) {
+            throw new IllegalArgumentException("版本不存在: " + agentVersionId);
         }
-        agentVersionRepository.deleteById(versionId.intValue());
-        log.info("Version deleted: id={}", versionId);
-    }
-
-    /**
-     * 查询指定 Agent 的所有版本，按创建时间排序（JPA 默认）。
-     */
-    @Override
-    public List<AgentVersionPO> getVersions(Long agentId) {
-        // 校验 Agent 存在
-        agentInfoRepository.findById(agentId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + agentId));
-        return agentVersionRepository.findByAgentId(agentId.intValue());
-    }
-
-    // ==================== 辅助方法 ====================
-
-    /**
-     * 将 status 字符串映射为 byte。
-     * <ul>
-     *   <li>enabled / null → 1</li>
-     *   <li>disabled → 0</li>
-     * </ul>
-     */
-    private byte mapStatus(String status) {
-        if (status == null || "enabled".equalsIgnoreCase(status)) {
-            return 1;
+        if (evaluationTaskRepository.existsByAgentVersionId(agentVersionId)) {
+            throw new IllegalStateException("该 Agent 版本已被测评任务引用，无法删除");
         }
-        return 0;
+        agentVersionRepository.deleteById(agentVersionId);
+        log.info("Version deleted: id={}", agentVersionId);
     }
 
-    /**
-     * 将 Boolean enabled 映射为 byte。
-     * <ul>
-     *   <li>true / null → 1（默认启用）</li>
-     *   <li>false → 0</li>
-     * </ul>
-     */
-    private byte mapEnabled(Boolean enabled) {
-        if (enabled == null || enabled) {
-            return 1;
-        }
-        return 0;
-    }
+
 }

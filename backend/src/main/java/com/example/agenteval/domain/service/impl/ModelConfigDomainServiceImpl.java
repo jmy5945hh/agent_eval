@@ -13,6 +13,7 @@ import com.example.agenteval.domain.service.OSService;
 import com.example.agenteval.domain.service.mapstruct.ModelConfigMapper;
 import com.example.agenteval.infrastructure.enums.ModelCallTypeEnum;
 import com.example.agenteval.infrastructure.util.EnumUtil;
+import com.example.agenteval.infrastructure.util.MapUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -78,8 +79,8 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
                 .authorization(request.getAuthorization())
                 .version(request.getVersion())
                 .description(request.getDescription())
-                .enabled(mapBoolean(request.getEnabled(), true))
-                .scoring(mapBoolean(request.getScoring(), false))
+                .enabled(MapUtil.mapBoolean(request.getEnabled(), true))
+                .scoring(MapUtil.mapBoolean(request.getScoring(), false))
                 .build();
 
         ModelConfigPO saved = modelConfigRepository.save(model);
@@ -131,10 +132,10 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
             model.setDescription(request.getDescription());
         }
         if (request.getEnabled() != null) {
-            model.setEnabled(mapBoolean(request.getEnabled(), true));
+            model.setEnabled(MapUtil.mapBoolean(request.getEnabled(), true));
         }
         if (request.getScoring() != null) {
-            model.setScoring(mapBoolean(request.getScoring(), false));
+            model.setScoring(MapUtil.mapBoolean(request.getScoring(), false));
         }
 
         ModelConfigPO saved = modelConfigRepository.save(model);
@@ -170,7 +171,7 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
         Page<ModelConfigPO> byModelName = modelConfigRepository.findByModelName(request.getModelName(), pageable);
         /*Page<ModelListResponse> map = byModelName.map(ModelListResponse::from);*/
-        return byModelName.map(modelConfigMapper ::toListResponse);
+        return byModelName.map(modelConfigMapper::toListResponse);
     }
 
     @Override
@@ -181,19 +182,6 @@ public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
     }
 
     // ==================== 辅助方法 ====================
-
-
-    /**
-     * 将 Boolean 映射为 byte。
-     *
-     * @param value        Boolean 值
-     * @param defaultValue 为 null 时的默认值
-     * @return 1 或 0
-     */
-    private byte mapBoolean(Boolean value, boolean defaultValue) {
-        boolean result = value != null ? value : defaultValue;
-        return result ? (byte) 1 : (byte) 0;
-    }
 
     /**
      * 判断 authorization 是否为脱敏占位符（如 "sk-****"）。

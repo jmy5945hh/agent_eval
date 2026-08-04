@@ -40,6 +40,16 @@ public class ModelListResponse {
      */
     private String description;
 
+    /**
+     * 创建时间
+     */
+    private String createTime;
+
+    /**
+     * 更新时间
+     */
+    private String updateTime;
+
     public static ModelListResponse from(ModelConfigPO modelConfigPO) {
         return ModelListResponse.builder().modelName(modelConfigPO.getModelName()).id(modelConfigPO.getId())
                 .version(modelConfigPO.getVersion()).enabled(1 == modelConfigPO.getEnabled())

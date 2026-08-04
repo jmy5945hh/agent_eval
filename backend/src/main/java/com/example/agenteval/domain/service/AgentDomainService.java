@@ -1,10 +1,12 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.AgentRequest;
-import com.example.agenteval.domain.model.AgentInfoPO;
-import com.example.agenteval.domain.model.AgentVersionPO;
+import com.example.agenteval.application.dto.BasePageRequest;
+import com.example.agenteval.application.dto.request.agent.*;
+import com.example.agenteval.application.dto.response.agent.AgentListResponse;
+import com.example.agenteval.application.dto.response.agent.AgentVersionListResponse;
+import org.springframework.data.domain.Page;
 
-import java.util.List;
+import javax.validation.Valid;
 
 /**
  * Agent 领域服务接口 — 负责 Agent 产品及其版本的 CRUD。
@@ -26,7 +28,7 @@ public interface AgentDomainService {
      * @param request 包含 name、version、vendor、description、startCmd、executorType
      * @return 创建后的 Agent 实体
      */
-    AgentInfoPO createAgent(AgentRequest request);
+    void createAgent(AgentCreateRequest request);
 
     /**
      * 编辑 Agent 产品信息。
@@ -35,7 +37,7 @@ public interface AgentDomainService {
      * @param request 编辑请求
      * @return 更新后的 Agent 实体
      */
-    AgentInfoPO updateAgent(Long agentId, AgentRequest request);
+    void updateAgent(Integer agentId, AgentUpdateRequest request);
 
     /**
      * 删除 Agent。
@@ -43,44 +45,63 @@ public interface AgentDomainService {
      *
      * @param agentId Agent ID
      */
-    void deleteAgent(Long agentId);
+    void deleteAgent(Integer agentId);
 
-    // ==================== Agent 版本管理 ====================
-
-    /**
-     * 为指定 Agent 新增一个版本。
-     *
-     * @param agentId Agent ID
-     * @param version 版本号
-     * @param notes   版本说明
-     * @param enabled 是否启用
-     * @return 创建后的版本实体
-     */
-    AgentVersionPO addVersion(Long agentId, String version, String notes, Boolean enabled);
-
-    /**
-     * 编辑 Agent 版本信息。
-     *
-     * @param versionId 版本 ID
-     * @param version   版本号
-     * @param notes     版本说明
-     * @param enabled   是否启用
-     * @return 更新后的版本实体
-     */
-    AgentVersionPO updateVersion(Long versionId, String version, String notes, Boolean enabled);
 
     /**
      * 删除 Agent 版本。
      *
-     * @param versionId 版本 ID
+     * @param agentVersionId 版本 ID
      */
-    void deleteVersion(Long versionId);
+    void deleteVersion(Integer agentVersionId);
+
 
     /**
-     * 查询指定 Agent 的所有版本。
+     * 新增agent版本信息
      *
-     * @param agentId Agent ID
-     * @return 版本列表
+     * @param agentId
+     * @param request
      */
-    List<AgentVersionPO> getVersions(Long agentId);
+    void createAgentVersion(Integer agentId, @Valid AgentVersionCreateRequest request);
+
+    /**
+     * 更新版本信息
+     *
+     * @param agentId
+     * @param agentVersionId
+     * @param request
+     */
+    void updateAgentVersion(Integer agentId, Integer agentVersionId, AgentVersionUpdateRequest request);
+
+    /**
+     * 查询agent列表
+     *
+     * @param request
+     * @return
+     */
+    Page<AgentListResponse> agentList(AgentListRequest request);
+
+    /**
+     * 根据id获取agent信息
+     *
+     * @param agentId
+     * @return
+     */
+    AgentListResponse agentInfo(Integer agentId);
+
+    /**
+     * 分页查询agent版本列表
+     *
+     * @param agentId
+     * @return
+     */
+    Page<AgentVersionListResponse> agentVersionList(Integer agentId, BasePageRequest basePageRequest);
+
+    /**
+     * 根据Id查询版本信息
+     *
+     * @param agentVersionId
+     * @return
+     */
+    AgentVersionListResponse agentVersionInfo(Integer agentVersionId);
 }

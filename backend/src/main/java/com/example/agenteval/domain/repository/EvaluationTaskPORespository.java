@@ -12,6 +12,11 @@ public interface EvaluationTaskPORespository extends BaseRepository<EvaluationTa
     boolean existsByAgentId(int agentId);
 
     /**
+     * 判断指定 Agent 版本是否被测评任务引用，用于删除前的依赖检查。
+     */
+    boolean existsByAgentVersionId(int agentVersionId);
+
+    /**
      * 判断指定模型是否被测评任务引用（作为执行模型）。
      */
     boolean existsByModelId(int modelId);
