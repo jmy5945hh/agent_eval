@@ -1,4 +1,4 @@
-package com.example.agenteval.application.dto;
+package com.example.agenteval.application.dto.response.task;
 
 import com.example.agenteval.domain.model.EvaluationTaskPO;
 import com.example.agenteval.domain.model.pojo.CaseRun;
