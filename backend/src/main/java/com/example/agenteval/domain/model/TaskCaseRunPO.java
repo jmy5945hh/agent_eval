@@ -53,7 +53,7 @@ public class TaskCaseRunPO extends BaseEntity {
     /**
      * 执行耗时（毫秒）,;
      */
-    @Column(nullable = true)
+    @Column(nullable = true, name = "duration_ms")
     private long durationMs;
     /**
      * 错误信息对象存储键值,;

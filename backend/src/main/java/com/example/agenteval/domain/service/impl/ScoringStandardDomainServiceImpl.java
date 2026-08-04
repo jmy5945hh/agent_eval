@@ -1,11 +1,14 @@
 package com.example.agenteval.domain.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.example.agenteval.application.dto.ScoringStandardRequest;
 import com.example.agenteval.domain.model.ScoringStandardPO;
 import com.example.agenteval.domain.model.pojo.ScoringDimension;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.ScoringStandardPORespository;
 import com.example.agenteval.domain.service.ScoringStandardDomainService;
+import com.example.agenteval.infrastructure.util.MapUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +52,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
      */
     @Override
     @Transactional
-    public ScoringStandardPO createStandard(ScoringStandardRequest request) {
+    public void createStandard(ScoringStandardRequest request) {
         // 版本号唯一性校验
         if (standardRepository.existsByVersion(request.getVersion())) {
             throw new IllegalArgumentException("版本号已存在: " + request.getVersion());
@@ -66,7 +69,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
 
         ScoringStandardPO entity = ScoringStandardPO.builder()
                 .version(request.getVersion())
-                .isCurrent(current ? (byte) 1 : (byte) 0)
+                .isCurrent(MapUtil.mapBoolean(current, false))
                 .note(request.getNote())
                 .dimensions(serializeDimensions(request.getDimensions()))
                 .build();
@@ -74,7 +77,6 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
         ScoringStandardPO saved = standardRepository.save(entity);
         log.info("Scoring standard created: id={}, version={}, isCurrent={}, dimensions={}",
                 saved.getId(), saved.getVersion(), current, request.getDimensions().size());
-        return saved;
     }
 
     /**
@@ -84,7 +86,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
      */
     @Override
     @Transactional
-    public ScoringStandardPO updateStandard(Long id, ScoringStandardRequest request) {
+    public void updateStandard(Integer id, ScoringStandardRequest request) {
         ScoringStandardPO entity = standardRepository.findById(id.intValue())
                 .orElseThrow(() -> new IllegalArgumentException("评分标准不存在: " + id));
 
@@ -92,20 +94,25 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
         validateWeightSum(request.getDimensions());
 
         // 若请求中 isCurrent=true，取消其他版本的当前标记
-        boolean current = request.getIsCurrent() != null && request.getIsCurrent();
-        if (current) {
-            clearCurrentVersions();
+        if (request.getIsCurrent() != null) {
+            boolean current = request.getIsCurrent();
+            if (current) {
+                clearCurrentVersions();
+            }
+            entity.setIsCurrent(current ? (byte) 1 : (byte) 0);
         }
 
         // 仅更新 note 和 dimensions（版本号不可修改）
-        entity.setNote(request.getNote());
-        entity.setDimensions(serializeDimensions(request.getDimensions()));
-        entity.setIsCurrent(current ? (byte) 1 : (byte) 0);
+        if (StrUtil.isNotBlank(request.getNote())) {
+            entity.setNote(request.getNote());
+        }
+        if (CollUtil.isNotEmpty(request.getDimensions())) {
+            entity.setDimensions(serializeDimensions(request.getDimensions()));
+        }
 
         ScoringStandardPO saved = standardRepository.save(entity);
-        log.info("Scoring standard updated: id={}, version={}, isCurrent={}",
-                id, saved.getVersion(), current);
-        return saved;
+        log.info("Scoring standard updated: id={}, version={}",
+                id, saved.getVersion());
     }
 
     /**
@@ -115,7 +122,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
      */
     @Override
     @Transactional
-    public void deleteStandard(Long id) {
+    public void deleteStandard(Integer id) {
         int standardId = id.intValue();
 
         // 检查是否存在
@@ -140,6 +147,9 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
      * @throws IllegalArgumentException 权重之和不等于 100 时抛出
      */
     private void validateWeightSum(List<ScoringDimension> dimensions) {
+        if (CollUtil.isEmpty(dimensions)) {
+            return;
+        }
         int total = dimensions.stream()
                 .mapToInt(d -> d.getWeight() != null ? d.getWeight() : 0)
                 .sum();

@@ -1,29 +1,35 @@
 package com.example.agenteval.domain.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ObjUtil;
+import com.example.agenteval.application.dto.request.record.RecordListRequest;
+import com.example.agenteval.application.dto.response.record.RecordListResponse;
+import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
 import com.example.agenteval.application.dto.response.task.TaskResponse;
-import com.example.agenteval.domain.model.EvaluationTaskPO;
-import com.example.agenteval.domain.model.TaskCaseRunPO;
-import com.example.agenteval.domain.model.TaskCaseScorePO;
+import com.example.agenteval.domain.model.*;
 import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.RunScore;
-import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
-import com.example.agenteval.domain.repository.TaskCaseRunPORespository;
-import com.example.agenteval.domain.repository.TaskCaseScorePORespository;
+import com.example.agenteval.domain.repository.*;
 import com.example.agenteval.domain.service.RecordQueryService;
+import com.example.agenteval.domain.service.specification.EvaluationTaskPOSpecs;
+import com.example.agenteval.infrastructure.enums.CaseRunStatusEnum;
+import com.example.agenteval.infrastructure.enums.TaskStatusEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +52,8 @@ public class RecordQueryServiceImpl implements RecordQueryService {
     private final EvaluationTaskPORespository taskRepository;
     private final TaskCaseRunPORespository caseRunRepository;
     private final TaskCaseScorePORespository caseScoreRepository;
+    private final AgentInfoPORespository agentInfoPORespository;
+    private final ModelConfigPORespository modelConfigPORespository;
 
     // ==================== 分页查询 ====================
 
@@ -55,9 +63,9 @@ public class RecordQueryServiceImpl implements RecordQueryService {
      */
     @Override
     public Page<TaskResponse> listRecords(int page, int size,
-                                                   String agentId, String modelId,
-                                                   String status,
-                                                   LocalDateTime dateFrom, LocalDateTime dateTo) {
+                                          String agentId, String modelId,
+                                          String status,
+                                          LocalDateTime dateFrom, LocalDateTime dateTo) {
         Specification<EvaluationTaskPO> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -114,6 +122,57 @@ public class RecordQueryServiceImpl implements RecordQueryService {
 
         log.debug("Loaded record detail: taskId={}, runs={}", taskId, runs.size());
         return TaskResponse.from(task).withRuns(runs);
+    }
+
+    @Override
+    public SummaryDataResponse summaryData() {
+        //全部
+        long count = taskRepository.count();
+        //完成任务
+        int finishCount = taskRepository.countByStatus(TaskStatusEnum.RUNNING.getStatus());
+        //执行中
+        List<EvaluationTaskPO> byStatus = taskRepository.findByStatus(TaskStatusEnum.RUNNING.getStatus());
+        //队列中的案例
+        List<Integer> taskIds = byStatus.stream().map(EvaluationTaskPO::getId).collect(Collectors.toList());
+        List<TaskCaseRunPO> taskCaseRunPOS = caseRunRepository.findByTaskIdIn(taskIds);
+        long queueCase = taskCaseRunPOS.stream().filter(item -> CaseRunStatusEnum.QUEUED.getStatus().equals(item.getStatus())).count();
+        //近30天平均得分
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        Double avg = taskRepository.findAvgScoreOfCompletedTasksInLast30Days(TaskStatusEnum.COMPLETED.getStatus(), thirtyDaysAgo);
+        return SummaryDataResponse.builder().taskCount((int) count).finishCount(finishCount).runCount(CollUtil.isEmpty(byStatus) ? 0 : byStatus.size())
+                .queueCases((int) queueCase).averageScore(ObjUtil.isNull(avg) ? 0 : avg.intValue()).build();
+    }
+
+    @Override
+    public Page<RecordListResponse> recordList(RecordListRequest request) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+        Page<EvaluationTaskPO> evaluationTaskList = taskRepository.findAll(EvaluationTaskPOSpecs.recordListBuildSpec(request), pageable);
+        //agent
+        List<Integer> agentIds = evaluationTaskList.stream().map(EvaluationTaskPO::getAgentId).collect(Collectors.toList());
+        List<AgentInfoPO> agentInfoList = agentInfoPORespository.findByIdIn(agentIds);
+        Map<Integer, AgentInfoPO> agentInfoMap = agentInfoList.stream().collect(Collectors.toMap(AgentInfoPO::getId, Function.identity()));
+        //model
+        List<Integer> modelIds = evaluationTaskList.stream().map(EvaluationTaskPO::getModelId).collect(Collectors.toList());
+        List<ModelConfigPO> modelConfigList = modelConfigPORespository.findByIdIn(modelIds);
+        Map<Integer, ModelConfigPO> modelMap = modelConfigList.stream().collect(Collectors.toMap(ModelConfigPO::getId, Function.identity()));
+        //案例个数
+        List<Integer> taskId = evaluationTaskList.stream().map(EvaluationTaskPO::getId).collect(Collectors.toList());
+        List<TaskCaseRunPO> caseRunList = caseRunRepository.findByTaskIdIn(taskId);
+        Map<Integer, List<TaskCaseRunPO>> caseRunGroupMap = caseRunList.stream().collect(Collectors.groupingBy(TaskCaseRunPO::getTaskId));
+        List<EvaluationTaskPO> content = evaluationTaskList.getContent();
+        List<RecordListResponse> returnList = new ArrayList<>();
+        content.forEach(item -> {
+            AgentInfoPO agentInfoPO = agentInfoMap.get(item.getAgentId());
+            ModelConfigPO modelConfigPO = modelMap.get(item.getModelId());
+            List<TaskCaseRunPO> taskCaseRunPOS = caseRunGroupMap.get(item.getId());
+            returnList.add(RecordListResponse.builder().taskName(item.getTaskName()).agentName(agentInfoPO.getAgentName()).modelName(modelConfigPO.getModelName())
+                    .caseCount(taskCaseRunPOS.size()).taskStatus(item.getStatus()).scoreStatus(item.getScoringStatus()).taskCreateUserName(item.getCreateUserName())
+                    .taskCreateTaskTime(LocalDateTimeUtil.formatNormal(item.getCreateTime())).build());
+        });
+
+        return new PageImpl<>(returnList, evaluationTaskList.getPageable(), evaluationTaskList.getTotalElements());
+
     }
 
     // ==================== 映射转换 ====================
@@ -175,10 +234,14 @@ public class RecordQueryServiceImpl implements RecordQueryService {
     private int mapTaskStatus(String status) {
         if (status == null) return 1;
         switch (status.toLowerCase()) {
-            case "running":   return 1;
-            case "completed": return 2;
-            case "cancelled": return 3;
-            default:          return 1;
+            case "running":
+                return 1;
+            case "completed":
+                return 2;
+            case "cancelled":
+                return 3;
+            default:
+                return 1;
         }
     }
 
@@ -194,12 +257,18 @@ public class RecordQueryServiceImpl implements RecordQueryService {
      */
     private String mapRunStatus(int status) {
         switch (status) {
-            case 1: return "queued";
-            case 2: return "running";
-            case 3: return "success";
-            case 4: return "failed";
-            case 5: return "cancelled";
-            default: return "queued";
+            case 1:
+                return "queued";
+            case 2:
+                return "running";
+            case 3:
+                return "success";
+            case 4:
+                return "failed";
+            case 5:
+                return "cancelled";
+            default:
+                return "queued";
         }
     }
 }

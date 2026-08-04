@@ -15,4 +15,12 @@ public interface TaskCaseRunPORespository extends BaseRepository<TaskCaseRunPO, 
      * 根据任务 ID 查询所有执行记录。
      */
     List<TaskCaseRunPO> findByTaskId(int taskId);
+
+    /**
+     * 根据task_id批量查询
+     *
+     * @param taskIds
+     * @return
+     */
+    List<TaskCaseRunPO> findByTaskIdIn(List<Integer> taskIds);
 }

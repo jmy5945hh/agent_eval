@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface AgentInfoPORespository extends BaseRepository<AgentInfoPO, Integer> {
 
     /**
@@ -35,4 +37,13 @@ public interface AgentInfoPORespository extends BaseRepository<AgentInfoPO, Inte
             @Param("excludedId") Integer excludedId,
             @Param("defaultValue") byte defaultValue
     );
+
+
+    /**
+     * 根据主键id批量查询
+     *
+     * @param agentIds
+     * @return
+     */
+    List<AgentInfoPO> findByIdIn(List<Integer> agentIds);
 }

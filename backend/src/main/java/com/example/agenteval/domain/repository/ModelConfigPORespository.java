@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface ModelConfigPORespository extends BaseRepository<ModelConfigPO, Integer> {
 
     /**
@@ -26,4 +28,12 @@ public interface ModelConfigPORespository extends BaseRepository<ModelConfigPO, 
      */
     @Query("SELECT m FROM ModelConfigPO m WHERE (:modelName IS NULL OR m.modelName = :modelName)")
     Page<ModelConfigPO> findByModelName(String modelName, Pageable pageable);
+
+    /**
+     * 根据模型id查询
+     *
+     * @param modelIds
+     * @return
+     */
+    List<ModelConfigPO> findByIdIn(List<Integer> modelIds);
 }

@@ -2,7 +2,6 @@ package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.ScoringStandardRequest;
 import com.example.agenteval.application.dto.response.CommonResponse;
-import com.example.agenteval.domain.model.ScoringStandardPO;
 import com.example.agenteval.domain.service.ScoringStandardDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,45 +29,44 @@ public class ScoringStandardController {
      * 新增评分标准版本。后端校验权重合计为 100%，不通过返回 400。
      */
     @PostMapping
-    public ResponseEntity<CommonResponse<ScoringStandardPO>> createStandard(
+    public ResponseEntity<CommonResponse<Void>> createStandard(
             @Valid @RequestBody ScoringStandardRequest request) {
         log.info("Creating scoring standard: version={}, dimensions={}",
                 request.getVersion(), request.getDimensions().size());
-        validateWeights(request);
-        ScoringStandardPO created = scoringStandardDomainService.createStandard(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.success(created));
+        scoringStandardDomainService.createStandard(request);
+        return ResponseEntity.ok(CommonResponse.success());
     }
 
     /**
      * 编辑评分标准版本。版本号不可修改，仅允许修改 note 和 dimensions。
      */
     @PutMapping("/{id}")
-    public CommonResponse<ScoringStandardPO> updateStandard(
-            @PathVariable Long id,
+    public ResponseEntity<CommonResponse<Void>> updateStandard(
+            @PathVariable Integer id,
             @Valid @RequestBody ScoringStandardRequest request) {
         log.info("Updating scoring standard: id={}, version={}", id, request.getVersion());
-        validateWeights(request);
-        ScoringStandardPO updated = scoringStandardDomainService.updateStandard(id, request);
-        return CommonResponse.success(updated);
+        scoringStandardDomainService.updateStandard(id, request);
+        return ResponseEntity.ok(CommonResponse.success());
     }
 
     /**
      * 删除评分标准版本。被测评任务引用时返回 409。
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<Void>> deleteStandard(@PathVariable Long id) {
+    public ResponseEntity<CommonResponse<Void>> deleteStandard(@PathVariable Integer id) {
         log.info("Deleting scoring standard: id={}", id);
         try {
             scoringStandardDomainService.deleteStandard(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(CommonResponse.success());
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(CommonResponse.<Void>builder().code(409).message(e.getMessage()).build());
         }
     }
 
-    /** 校验评分维度权重合计是否为 100% */
+    /**
+     * 校验评分维度权重合计是否为 100%
+     */
     private void validateWeights(ScoringStandardRequest request) {
         int total = request.getDimensions().stream()
                 .mapToInt(d -> d.getWeight() != null ? d.getWeight() : 0)

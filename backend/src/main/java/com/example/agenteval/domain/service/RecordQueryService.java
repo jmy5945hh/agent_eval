@@ -1,8 +1,12 @@
 package com.example.agenteval.domain.service;
 
+import com.example.agenteval.application.dto.request.record.RecordListRequest;
+import com.example.agenteval.application.dto.response.record.RecordListResponse;
+import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
 import com.example.agenteval.application.dto.response.task.TaskResponse;
 import org.springframework.data.domain.Page;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 
 /**
@@ -46,4 +50,19 @@ public interface RecordQueryService {
      * @return 任务详情（含 runs、统计汇总）
      */
     TaskResponse getRecordDetail(Long taskId);
+
+    /**
+     * 汇总数据
+     *
+     * @return
+     */
+    SummaryDataResponse summaryData();
+
+    /**
+     * 分页查询评测记录
+     *
+     * @param request
+     * @return
+     */
+    Page<RecordListResponse> recordList(@Valid RecordListRequest request);
 }

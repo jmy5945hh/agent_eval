@@ -1,7 +1,6 @@
 package com.example.agenteval.domain.service;
 
 import com.example.agenteval.application.dto.ScoringStandardRequest;
-import com.example.agenteval.domain.model.ScoringStandardPO;
 
 /**
  * 评分标准领域服务接口 — 负责评分标准的版本管理。
@@ -21,9 +20,8 @@ public interface ScoringStandardDomainService {
      * <p>若 isCurrent=true，需先将其他版本置为非当前。</p>
      *
      * @param request 包含 version、note、dimensions
-     * @return 创建后的评分标准实体
      */
-    ScoringStandardPO createStandard(ScoringStandardRequest request);
+    void createStandard(ScoringStandardRequest request);
 
     /**
      * 编辑评分标准版本。
@@ -33,7 +31,7 @@ public interface ScoringStandardDomainService {
      * @param request 编辑请求
      * @return 更新后的评分标准实体
      */
-    ScoringStandardPO updateStandard(Long id, ScoringStandardRequest request);
+    void updateStandard(Integer id, ScoringStandardRequest request);
 
     /**
      * 删除评分标准版本。
@@ -41,5 +39,5 @@ public interface ScoringStandardDomainService {
      *
      * @param id 评分标准 ID
      */
-    void deleteStandard(Long id);
+    void deleteStandard(Integer id);
 }
