@@ -1,4 +1,4 @@
-package com.example.agenteval.application.dto;
+package com.example.agenteval.application.dto.request.task;
 
 import lombok.Data;
 
