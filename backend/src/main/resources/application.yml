@@ -104,3 +104,19 @@ minio:
   access-key: agent_eval
   secret-key: agent_eval_%123
   bucket: eval
+
+temp-file_path: ./temp/
+
+
+# Knife4j 配置
+knife4j:
+  enable: true
+  # 生产环境屏蔽，设置为 true 可在生产环境关闭文档访问入口[reference:4]
+  # production: false
+
+# OpenAPI 相关信息配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs

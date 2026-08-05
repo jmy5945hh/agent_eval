@@ -3,13 +3,20 @@ package com.example.agenteval.adaptor.rest;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.EvaluationTaskPO;
 import com.example.agenteval.domain.model.TaskCaseRunPO;
-import com.example.agenteval.domain.repository.*;
+import com.example.agenteval.domain.repository.EvaluationCasePORespository;
+import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
+import com.example.agenteval.domain.repository.TaskCaseRunPORespository;
+import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 工作台控制器，提供聚合统计数据，供 DashboardPage 的指标卡片、Agent 排行榜、最近测评摘要使用。
@@ -18,6 +25,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
+@Api(tags = "工作台控制器")
+@ApiIgnore
 public class DashboardController {
 
     private final EvaluationTaskPORespository taskRepository;

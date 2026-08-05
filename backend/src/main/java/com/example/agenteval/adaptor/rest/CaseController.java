@@ -6,6 +6,7 @@ import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.EvaluationCasePO;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
 import com.example.agenteval.domain.service.CaseDomainService;
+import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,10 +15,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 案例管理控制器，负责案例的新增、编辑、删除、分页查询、关联任务检查及标准答案上传。
@@ -27,6 +30,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/cases")
 @RequiredArgsConstructor
+@Api(tags = "案例管理控制器")
+@ApiIgnore
 public class CaseController {
 
     private final CaseDomainService caseDomainService;
@@ -79,10 +84,18 @@ public class CaseController {
     private PageRequest buildPageRequest(int page, int size, String sortBy) {
         Sort sort;
         switch (sortBy) {
-            case "caseName":   sort = Sort.by(Sort.Direction.ASC, "caseName"); break;
-            case "difficulty": sort = Sort.by(Sort.Direction.ASC, "difficulty"); break;
-            case "createTime": sort = Sort.by(Sort.Direction.DESC, "createTime"); break;
-            default:           sort = Sort.by(Sort.Direction.DESC, "id"); break;
+            case "caseName":
+                sort = Sort.by(Sort.Direction.ASC, "caseName");
+                break;
+            case "difficulty":
+                sort = Sort.by(Sort.Direction.ASC, "difficulty");
+                break;
+            case "createTime":
+                sort = Sort.by(Sort.Direction.DESC, "createTime");
+                break;
+            default:
+                sort = Sort.by(Sort.Direction.DESC, "id");
+                break;
         }
         return PageRequest.of(page, size, sort);
     }
@@ -140,12 +153,18 @@ public class CaseController {
     private Integer mapCategoryInt(String category) {
         if (category == null) return 1;
         switch (category) {
-            case "前端":     return 1;
-            case "Java后端":  return 2;
-            case "Python后端": return 3;
-            case "AI智能体":  return 4;
-            case "安全测试":  return 5;
-            default:        return 1;
+            case "前端":
+                return 1;
+            case "Java后端":
+                return 2;
+            case "Python后端":
+                return 3;
+            case "AI智能体":
+                return 4;
+            case "安全测试":
+                return 5;
+            default:
+                return 1;
         }
     }
 

@@ -1,8 +1,12 @@
 package com.example.agenteval.domain.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
-import com.example.agenteval.application.dto.ScoringStandardRequest;
+import cn.hutool.json.JSONUtil;
+import com.example.agenteval.application.dto.BasePageRequest;
+import com.example.agenteval.application.dto.request.score.ScoringStandardRequest;
+import com.example.agenteval.application.dto.response.score.ScoringStandardListResponse;
 import com.example.agenteval.domain.model.ScoringStandardPO;
 import com.example.agenteval.domain.model.pojo.ScoringDimension;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
@@ -13,9 +17,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,7 +68,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
         validateWeightSum(request.getDimensions());
 
         // 若设为当前版本，取消其他版本的当前标记
-        boolean current = request.getIsCurrent() != null && request.getIsCurrent();
+        boolean current = request.getCurrentVersion() != null && request.getCurrentVersion();
         if (current) {
             clearCurrentVersions();
         }
@@ -94,8 +100,8 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
         validateWeightSum(request.getDimensions());
 
         // 若请求中 isCurrent=true，取消其他版本的当前标记
-        if (request.getIsCurrent() != null) {
-            boolean current = request.getIsCurrent();
+        if (request.getCurrentVersion() != null) {
+            boolean current = request.getCurrentVersion();
             if (current) {
                 clearCurrentVersions();
             }
@@ -137,6 +143,26 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
 
         standardRepository.deleteById(standardId);
         log.info("Scoring standard deleted: id={}", id);
+    }
+
+    @Override
+    public Page<ScoringStandardListResponse> scoringStandardList(BasePageRequest request) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+        Page<ScoringStandardPO> scoringStandardPOS = standardRepository.findAll(pageable);
+        List<ScoringStandardPO> content = scoringStandardPOS.getContent();
+        List<ScoringStandardListResponse> returnList = new ArrayList<>();
+        content.forEach(item -> {
+            List<ScoringDimension> scoringDimension = JSONUtil.toBean(item.getDimensions(), new TypeReference<List<ScoringDimension>>() {
+            }, true);
+            returnList.add(ScoringStandardListResponse.builder()
+                    .id(item.getId())
+                    .version(item.getVersion())
+                    .note(item.getNote())
+                    .currentVersion(item.getIsCurrent() == 1)
+                    .dimensions(scoringDimension).build());
+        });
+        return new PageImpl<>(returnList, scoringStandardPOS.getPageable(), scoringStandardPOS.getTotalElements());
     }
 
     // ==================== 辅助方法 ====================

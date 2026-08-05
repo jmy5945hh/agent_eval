@@ -2,11 +2,14 @@ package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.request.model.ModelConfigRequest;
 import com.example.agenteval.application.dto.request.model.ModelListRequest;
+import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
 import com.example.agenteval.application.dto.response.model.ModelListResponse;
-import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +30,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/api/models")
 @RequiredArgsConstructor
+@Api(tags = "模型配置")
 public class ModelConfigController {
 
     private final ModelConfigDomainService modelConfigDomainService;
@@ -34,7 +38,8 @@ public class ModelConfigController {
     /**
      * 新增模型配置。
      */
-    @PostMapping
+    @ApiOperation(value = "新增模型配置")
+    @PostMapping("")
     public ResponseEntity<CommonResponse<Void>> createModel(
             @Valid @RequestBody ModelConfigRequest request) {
         log.info("Creating model: name={}, scoring={}", request.getModelName(), request.getScoring());
@@ -45,9 +50,10 @@ public class ModelConfigController {
     /**
      * 编辑模型配置。若 authorization 字段为空或脱敏值则不更新 Key。
      */
+    @ApiOperation(value = "修改模型配置")
     @PutMapping("/{id}")
     public ResponseEntity<CommonResponse<Void>> updateModel(
-            @PathVariable Integer id,
+            @ApiParam(value = "模型配置ID", required = true) @PathVariable Integer id,
             @Valid @RequestBody ModelConfigRequest request) {
         log.info("Updating model: id={}, name={}", id, request.getModelName());
         ModelConfigPO updated = modelConfigDomainService.updateModel(id, request);
@@ -57,8 +63,9 @@ public class ModelConfigController {
     /**
      * 删除模型配置。被测评任务或评分任务引用时返回 409。
      */
+    @ApiOperation(value = "删除模型配置")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<Void>> deleteModel(@PathVariable Integer id) {
+    public ResponseEntity<CommonResponse<Void>> deleteModel(@ApiParam(value = "模型配置ID", required = true) @PathVariable Integer id) {
         log.info("Deleting model: id={}", id);
         try {
             modelConfigDomainService.deleteModel(id);
@@ -75,6 +82,7 @@ public class ModelConfigController {
      * @param request
      * @return
      */
+    @ApiOperation(value = "分页查询模型列表")
     @PostMapping("/list")
     public ResponseEntity<CommonResponse<Page<ModelListResponse>>> modelList(@Valid @RequestBody ModelListRequest request) {
         Page<ModelListResponse> modelListResponses = modelConfigDomainService.modelList(request);
@@ -84,10 +92,12 @@ public class ModelConfigController {
 
     /**
      * 根据id查询模型信息
+     *
      * @return
      */
+    @ApiOperation(value = "根据id查询模型信息")
     @GetMapping("/{id}")
-    public ResponseEntity<CommonResponse<ModelInfoResponse>> modelInfo(@PathVariable("id") Integer id){
+    public ResponseEntity<CommonResponse<ModelInfoResponse>> modelInfo(@ApiParam(value = "模型配置ID", required = true) @PathVariable("id") Integer id) {
         return ResponseEntity.ok(CommonResponse.success(modelConfigDomainService.modelInfo(id)));
     }
 }

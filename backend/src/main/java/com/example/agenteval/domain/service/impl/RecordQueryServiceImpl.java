@@ -2,28 +2,41 @@ package com.example.agenteval.domain.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.example.agenteval.application.dto.request.record.RecordListRequest;
 import com.example.agenteval.application.dto.response.record.RecordListResponse;
 import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
 import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.domain.model.*;
+import com.example.agenteval.domain.model.excel.RecordListExcel;
 import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.RunScore;
 import com.example.agenteval.domain.repository.*;
 import com.example.agenteval.domain.service.RecordQueryService;
 import com.example.agenteval.domain.service.specification.EvaluationTaskPOSpecs;
+import com.example.agenteval.infrastructure.constant.ExcelConstant;
 import com.example.agenteval.infrastructure.enums.CaseRunStatusEnum;
+import com.example.agenteval.infrastructure.enums.ScoringStatusEnum;
 import com.example.agenteval.infrastructure.enums.TaskStatusEnum;
+import com.example.agenteval.infrastructure.util.EnumUtil;
+import com.example.agenteval.infrastructure.util.ExcelUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Predicate;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -54,6 +67,9 @@ public class RecordQueryServiceImpl implements RecordQueryService {
     private final TaskCaseScorePORespository caseScoreRepository;
     private final AgentInfoPORespository agentInfoPORespository;
     private final ModelConfigPORespository modelConfigPORespository;
+
+    @Value("${temp-file_path}")
+    private String tempFilePath;
 
     // ==================== 分页查询 ====================
 
@@ -148,6 +164,49 @@ public class RecordQueryServiceImpl implements RecordQueryService {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
         Page<EvaluationTaskPO> evaluationTaskList = taskRepository.findAll(EvaluationTaskPOSpecs.recordListBuildSpec(request), pageable);
+        List<RecordListResponse> returnList = getRecordListResponse(evaluationTaskList);
+        return new PageImpl<>(returnList, evaluationTaskList.getPageable(), evaluationTaskList.getTotalElements());
+    }
+
+    @Override
+    public void exportRecord(HttpServletResponse response, RecordListRequest request) {
+        List<EvaluationTaskPO> allRecord = taskRepository.findAll(EvaluationTaskPOSpecs.recordListBuildSpec(request));
+        List<RecordListResponse> returnList = getRecordListResponse(allRecord);
+        List<RecordListExcel> excelList = new ArrayList<>(returnList.size());
+        returnList.forEach(item -> excelList.add(RecordListExcel.builder().taskName(item.getTaskName()).agentName(item.getAgentName())
+                .modelName(item.getModelName()).caseCount(item.getCaseCount())
+                .taskStatus(EnumUtil.findEnumByField(TaskStatusEnum.class, TaskStatusEnum.STATUS_CONSTANT, item.getTaskStatus()).getInterpretation())
+                .scoreStatus(EnumUtil.findEnumByField(ScoringStatusEnum.class, ScoringStatusEnum.STATUS_CONSTANT, item.getScoreStatus()).getInterpretation())
+                .taskCreateUserName(item.getTaskCreateUserName()).taskCreateTaskTime(item.getTaskCreateTaskTime()).build()));
+        String fileName = IdUtil.simpleUUID() + ExcelConstant.SUFFIX;
+        String filePath = tempFilePath + fileName;
+        ExcelUtil.writeExcel(filePath, ExcelConstant.RECORD_EXCEL_SHEET_NAME, excelList, RecordListExcel.class);
+        try (OutputStream out = response.getOutputStream();
+             InputStream inputStream = new FileInputStream(filePath)) {
+            byte[] fileByte = IOUtils.toByteArray(inputStream);
+            response.reset();
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+            response.addHeader("Content-Length", String.valueOf(fileByte.length));
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            out.write(fileByte);
+            out.flush();
+        } catch (Exception e) {
+            log.error("下载评测文件失败，失败原因:[{}]", e.getMessage(), e);
+        } finally {
+            new File(filePath).delete();
+        }
+    }
+
+
+    private List<RecordListResponse> getRecordListResponse(Object obj) {
+        List<EvaluationTaskPO> evaluationTaskList = null;
+        if (obj instanceof Page) {
+            Page<?> page = (Page<?>) obj;
+            evaluationTaskList = (List<EvaluationTaskPO>) page.getContent();
+        } else if (obj instanceof List) {
+            List<?> list = (List<?>) obj;
+            evaluationTaskList = (List<EvaluationTaskPO>) list;
+        }
         //agent
         List<Integer> agentIds = evaluationTaskList.stream().map(EvaluationTaskPO::getAgentId).collect(Collectors.toList());
         List<AgentInfoPO> agentInfoList = agentInfoPORespository.findByIdIn(agentIds);
@@ -160,9 +219,8 @@ public class RecordQueryServiceImpl implements RecordQueryService {
         List<Integer> taskId = evaluationTaskList.stream().map(EvaluationTaskPO::getId).collect(Collectors.toList());
         List<TaskCaseRunPO> caseRunList = caseRunRepository.findByTaskIdIn(taskId);
         Map<Integer, List<TaskCaseRunPO>> caseRunGroupMap = caseRunList.stream().collect(Collectors.groupingBy(TaskCaseRunPO::getTaskId));
-        List<EvaluationTaskPO> content = evaluationTaskList.getContent();
         List<RecordListResponse> returnList = new ArrayList<>();
-        content.forEach(item -> {
+        evaluationTaskList.forEach(item -> {
             AgentInfoPO agentInfoPO = agentInfoMap.get(item.getAgentId());
             ModelConfigPO modelConfigPO = modelMap.get(item.getModelId());
             List<TaskCaseRunPO> taskCaseRunPOS = caseRunGroupMap.get(item.getId());
@@ -170,9 +228,7 @@ public class RecordQueryServiceImpl implements RecordQueryService {
                     .caseCount(taskCaseRunPOS.size()).taskStatus(item.getStatus()).scoreStatus(item.getScoringStatus()).taskCreateUserName(item.getCreateUserName())
                     .taskCreateTaskTime(LocalDateTimeUtil.formatNormal(item.getCreateTime())).build());
         });
-
-        return new PageImpl<>(returnList, evaluationTaskList.getPageable(), evaluationTaskList.getTotalElements());
-
+        return returnList;
     }
 
     // ==================== 映射转换 ====================

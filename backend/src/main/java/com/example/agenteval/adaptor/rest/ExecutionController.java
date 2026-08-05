@@ -5,9 +5,14 @@ import com.example.agenteval.domain.model.TaskCaseRunPO;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.TrajectoryEntry;
 import com.example.agenteval.domain.service.ExecutionDomainService;
+import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +26,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/executions")
 @RequiredArgsConstructor
+@Api(tags = "执行中心控制器")
+@ApiIgnore
 public class ExecutionController {
 
     private final ExecutionDomainService executionDomainService;

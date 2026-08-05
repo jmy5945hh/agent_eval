@@ -1,6 +1,9 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.ScoringStandardRequest;
+import com.example.agenteval.application.dto.BasePageRequest;
+import com.example.agenteval.application.dto.request.score.ScoringStandardRequest;
+import com.example.agenteval.application.dto.response.score.ScoringStandardListResponse;
+import org.springframework.data.domain.Page;
 
 /**
  * 评分标准领域服务接口 — 负责评分标准的版本管理。
@@ -40,4 +43,11 @@ public interface ScoringStandardDomainService {
      * @param id 评分标准 ID
      */
     void deleteStandard(Integer id);
+
+    /**
+     * 查询评分标准列表
+     *
+     * @return
+     */
+    Page<ScoringStandardListResponse> scoringStandardList(BasePageRequest basePageRequest);
 }

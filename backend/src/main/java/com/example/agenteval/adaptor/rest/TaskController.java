@@ -3,17 +3,19 @@ package com.example.agenteval.adaptor.rest;
 import com.example.agenteval.application.dto.AddCasesRequest;
 import com.example.agenteval.application.dto.ScoreRequest;
 import com.example.agenteval.application.dto.request.task.TaskCreateRequest;
-import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.application.dto.response.CommonResponse;
+import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.service.TaskDomainService;
 import com.example.agenteval.infrastructure.executor.AgentExecutorService;
 import com.example.agenteval.infrastructure.scoring.ScoringClientService;
+import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 import java.util.Collections;
@@ -28,6 +30,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
+@Api(tags = "评测任务控制器")
+@ApiIgnore
 public class TaskController {
 
     private final TaskDomainService taskDomainService;

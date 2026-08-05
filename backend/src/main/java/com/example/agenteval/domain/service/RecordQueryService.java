@@ -6,7 +6,7 @@ import com.example.agenteval.application.dto.response.record.SummaryDataResponse
 import com.example.agenteval.application.dto.response.task.TaskResponse;
 import org.springframework.data.domain.Page;
 
-import javax.validation.Valid;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 
 /**
@@ -64,5 +64,13 @@ public interface RecordQueryService {
      * @param request
      * @return
      */
-    Page<RecordListResponse> recordList(@Valid RecordListRequest request);
+    Page<RecordListResponse> recordList(RecordListRequest request);
+
+    /**
+     * 导出评测记录
+     *
+     * @param response
+     * @param request
+     */
+    void exportRecord(HttpServletResponse response, RecordListRequest request);
 }
