@@ -1,25 +1,20 @@
 import { useMemo, useState } from 'react';
 import {
   Avatar,
-  Badge,
   Button,
   ConfigProvider,
   Dropdown,
   Layout,
   Menu,
-  Tooltip,
   message,
 } from 'antd';
 import {
-  BellOutlined,
   BookOutlined,
   DownOutlined,
-  HistoryOutlined,
   HomeOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   RocketOutlined,
-  SearchOutlined,
   SettingOutlined,
   ThunderboltOutlined,
   UserOutlined,
@@ -30,7 +25,6 @@ import { DashboardPage } from './pages/DashboardPage';
 import { CreateTaskPage } from './pages/CreateTaskPage';
 import { CasesPage } from './pages/CasesPage';
 import { ExecutionPage } from './pages/ExecutionPage';
-import { RecordsPage } from './pages/RecordsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { CaseDetailModal } from './components/cases/CaseDetail';
@@ -38,14 +32,13 @@ import './App.css';
 
 const { Header, Sider, Content } = Layout;
 
-type PageKey = 'dashboard' | 'create' | 'cases' | 'execution' | 'records' | 'settings';
+type PageKey = 'dashboard' | 'create' | 'cases' | 'execution' | 'settings';
 
 const pageMeta: Record<PageKey, [string, string]> = {
   dashboard: ['工作台', ''],
   create: ['创建测评', ''],
   cases: ['案例库', ''],
   execution: ['执行中心', ''],
-  records: ['测评记录', ''],
   settings: ['Agent 与模型', ''],
 };
 
@@ -54,7 +47,6 @@ const navItems = [
   { key: 'create', icon: <RocketOutlined />, label: '创建测评' },
   { key: 'cases', icon: <BookOutlined />, label: '案例库' },
   { key: 'execution', icon: <ThunderboltOutlined />, label: '执行中心' },
-  { key: 'records', icon: <HistoryOutlined />, label: '测评记录' },
   { type: 'divider' as const },
   { key: 'settings', icon: <SettingOutlined />, label: 'Agent 与模型' },
 ];
@@ -120,8 +112,6 @@ export default function App() {
         return <CasesPage onSelectCase={setCaseDetail} />;
       case 'execution':
         return <ExecutionPage tasks={tasks} onOpenTask={openTask} onCreate={() => navigate('create')} />;
-      case 'records':
-        return <RecordsPage tasks={tasks} onOpenTask={openTask} />;
       case 'settings':
         return <SettingsPage />;
       default:

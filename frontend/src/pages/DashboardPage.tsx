@@ -3,13 +3,11 @@ import {
   ArrowRightOutlined,
   BarChartOutlined,
   BookOutlined,
-  BranchesOutlined,
-  CheckCircleFilled,
   ExperimentOutlined,
   RobotOutlined,
   RocketOutlined,
 } from '@ant-design/icons';
-import { AGENTS, CASES } from '../mock/data';
+import { CASES } from '../mock/data';
 import type { EvaluationTask } from '../types';
 import { MetricCard, MiniDonut } from '../components/common/MetricCard';
 import { TaskTable } from '../components/tasks/TaskTable';
@@ -24,8 +22,6 @@ interface DashboardPageProps {
 
 export function DashboardPage({ tasks, onNavigate, onOpenTask }: DashboardPageProps) {
   const recent = tasks[0];
-  const totalRuns = tasks.reduce((sum, task) => sum + task.runs.length, 0);
-  const successRuns = tasks.reduce((sum, task) => sum + task.runs.filter((run) => run.status === 'success').length, 0);
   const scoredRuns = recent.runs.filter((run) => run.score);
   const latestScore = Math.round(
     scoredRuns.reduce((sum, run) => {
@@ -118,7 +114,7 @@ export function DashboardPage({ tasks, onNavigate, onOpenTask }: DashboardPagePr
       <section className="surface-card">
         <div className="section-head">
           <div><h3>近期测评记录</h3><p>快速回到最近处理过的任务</p></div>
-          <Button type="text" onClick={() => onNavigate('records')}>查看全部 <ArrowRightOutlined /></Button>
+          <Button type="text" onClick={() => onNavigate('execution')}>查看全部 <ArrowRightOutlined /></Button>
         </div>
         <TaskTable tasks={tasks.slice(0, 3)} onOpenTask={onOpenTask} compact />
       </section>

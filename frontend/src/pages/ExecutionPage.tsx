@@ -1,8 +1,7 @@
-import { Button, Input, Progress, Radio, Select, Space } from 'antd';
+import { useMemo, useState } from 'react';
+import { Button, Input, Radio, Select } from 'antd';
 import {
-  ArrowRightOutlined,
   PlusOutlined,
-  ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import { CASES } from '../mock/data';
@@ -35,43 +34,41 @@ export function ExecutionPage({ tasks, onOpenTask, onCreate }: {
   onOpenTask: (task: EvaluationTask) => void;
   onCreate: () => void;
 }) {
-  const running = createRunningTask();
-  const allTasks = [running, ...tasks];
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<'all' | 'running' | 'completed'>('all');
+  const [sortBy, setSortBy] = useState<'createdAt' | 'status'>('createdAt');
+  const running = useMemo(createRunningTask, []);
+  const allTasks = useMemo(() => [running, ...tasks], [running, tasks]);
+  const filteredTasks = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return allTasks
+      .filter((task) => !keyword || task.name.toLowerCase().includes(keyword) || task.id.toLowerCase().includes(keyword))
+      .filter((task) => status === 'all' || task.status === status)
+      .sort((a, b) => sortBy === 'createdAt'
+        ? b.createdAt.localeCompare(a.createdAt)
+        : a.status.localeCompare(b.status));
+  }, [allTasks, search, sortBy, status]);
 
   return (
     <div className="page-stack">
-      <section className="running-banner">
-        <div className="running-pulse"><span /></div>
-        <div className="running-copy">
-          <small>当前执行中</small>
-          <h3>{running.name}</h3>
-          <p>正在执行：{CASES[2].name} · 已完成 2 / 5</p>
-        </div>
-        <div className="running-progress">
-          <div><span>整体进度</span><b>40%</b></div>
-          <Progress percent={40} showInfo={false} strokeColor="#fff" trailColor="rgba(255,255,255,.18)" />
-        </div>
-        <Button ghost onClick={() => onOpenTask(running)}>进入监控 <ArrowRightOutlined /></Button>
-      </section>
       <section className="surface-card table-card">
         <div className="section-head">
-          <div><h3>全部任务</h3><p>统一查看执行队列与评分进度</p></div>
-          <Space>
-            <Button icon={<ReloadOutlined />}>刷新</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>创建测评</Button>
-          </Space>
+          <div><h3>全部任务</h3><p>统一查看执行中与历史测评任务</p></div>
+          <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>创建测评</Button>
         </div>
         <div className="filter-bar">
-          <Input prefix={<SearchOutlined />} placeholder="搜索任务" className="search-input" />
+          <Input prefix={<SearchOutlined />} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索任务名称或编号" allowClear className="search-input" />
           <Radio.Group
-            defaultValue="all"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
             optionType="button"
             buttonStyle="solid"
-            options={[{ label: '全部', value: 'all' }, { label: '执行中', value: 'running' }, { label: '已完成', value: 'done' }]}
+            options={[{ label: '全部', value: 'all' }, { label: '执行中', value: 'running' }, { label: '已完成', value: 'completed' }]}
           />
-          <Select defaultValue="createdAt" options={[{ value: 'createdAt', label: '按创建时间' }, { value: 'status', label: '按任务状态' }]} />
+          <Select value={sortBy} onChange={setSortBy} options={[{ value: 'createdAt', label: '按创建时间' }, { value: 'status', label: '按任务状态' }]} />
+          <span className="filter-count">共 {filteredTasks.length} 个任务</span>
         </div>
-        <TaskTable tasks={allTasks} onOpenTask={onOpenTask} />
+        <TaskTable tasks={filteredTasks} onOpenTask={onOpenTask} />
       </section>
     </div>
   );
