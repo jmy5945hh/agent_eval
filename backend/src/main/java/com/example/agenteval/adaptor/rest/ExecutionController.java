@@ -1,74 +1,67 @@
 package com.example.agenteval.adaptor.rest;
 
+import com.example.agenteval.application.dto.request.record.RecordListRequest;
 import com.example.agenteval.application.dto.response.CommonResponse;
-import com.example.agenteval.domain.model.TaskCaseRunPO;
-import com.example.agenteval.domain.model.pojo.ErrorInfo;
-import com.example.agenteval.domain.model.pojo.TrajectoryEntry;
-import com.example.agenteval.domain.service.ExecutionDomainService;
+import com.example.agenteval.application.dto.response.record.RecordListResponse;
+import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
+import com.example.agenteval.domain.service.ExportService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import springfox.documentation.annotations.ApiIgnore;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 /**
- * 执行详情控制器，负责执行记录详情和轨迹数据的查询。
- * 数据来源为 TaskCaseRun（JPA 实体）和对象存储（轨迹）。
+ * 测评记录控制器，负责历史记录的列表查询（分页+筛选）、详情查询和评分明细导出。
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/executions")
+@RequestMapping("/api/records")
 @RequiredArgsConstructor
 @Api(tags = "执行中心控制器")
-@ApiIgnore
 public class ExecutionController {
 
-    private final ExecutionDomainService executionDomainService;
+    private final com.example.agenteval.domain.service.ExecutionController executionController;
+    private final ExportService exportService;
 
     /**
-     * 查询单条执行记录详情，含状态、执行统计和错误信息。
+     * 汇总数据
+     *
+     * @return
      */
-    @GetMapping("/runs/{runId}")
-    public CommonResponse<Map<String, Object>> getRunDetail(@PathVariable Long runId) {
-        TaskCaseRunPO run = executionDomainService.getRunDetail(runId);
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("runId", run.getId());
-        result.put("caseId", run.getCaseId());
-        result.put("taskId", run.getTaskId());
-        result.put("status", run.getStatus());
-        result.put("stats", buildStats(run));
-        result.put("error", buildError(run));
-        return CommonResponse.success(result);
+    @ApiOperation(value = "查询汇总数据")
+    @GetMapping("/summary/data")
+    public ResponseEntity<CommonResponse<SummaryDataResponse>> summaryData() {
+        return ResponseEntity.ok(CommonResponse.success(executionController.summaryData()));
+    }
+
+
+    /**
+     * 列表查询
+     *
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "查询评测列表")
+    @PostMapping("/list")
+    public ResponseEntity<CommonResponse<Page<RecordListResponse>>> recordList(@Valid @RequestBody RecordListRequest request) {
+        return ResponseEntity.ok(CommonResponse.success(executionController.recordList(request)));
     }
 
     /**
-     * 查询单条执行记录的完整轨迹，按 seq 升序排列。
+     * 导出评测记录
+     *
+     * @param response
      */
-    @GetMapping("/runs/{runId}/trajectory")
-    public CommonResponse<List<TrajectoryEntry>> getTrajectory(@PathVariable Long runId) {
-        List<TrajectoryEntry> trajectory = executionDomainService.getTrajectory(runId);
-        return CommonResponse.success(trajectory);
+    @ApiOperation(value = "导出评测记录")
+    @PostMapping("/export")
+    public void exportRecord(HttpServletResponse response, @Valid @RequestBody RecordListRequest request) {
+        executionController.exportRecord(response, request);
     }
 
-    private Map<String, Object> buildStats(TaskCaseRunPO run) {
-        Map<String, Object> stats = new LinkedHashMap<>();
-//        stats.put("rounds", run.getRounds() != null ? run.getRounds() : 0);
-//        stats.put("tokensIn", run.getTokensIn() != null ? run.getTokensIn() : 0);
-//        stats.put("tokensOut", run.getTokensOut() != null ? run.getTokensOut() : 0);
-//        stats.put("durationMs", run.getDurationMs() != null ? run.getDurationMs() : 0);
-//        stats.put("attempts", run.getAttempts() != null ? run.getAttempts() : 0);
-        return stats;
-    }
-
-    private ErrorInfo buildError(TaskCaseRunPO run) {
-        if (run.getErrorInfoKey() == null) return null;
-        return new ErrorInfo("agent", "");
-    }
 }

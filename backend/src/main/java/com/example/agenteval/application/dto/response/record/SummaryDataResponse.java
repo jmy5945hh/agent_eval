@@ -24,7 +24,7 @@ public class SummaryDataResponse {
      * 完成任务
      */
     @ApiModelProperty(value = "完成任务")
-    private Integer finishCount;
+    private Integer completionCount;
 
     /**
      * 执行中的任务
@@ -44,5 +44,6 @@ public class SummaryDataResponse {
     @ApiModelProperty(value = "平均得分")
     private double averageScore;
 
-
+    @ApiModelProperty(value = "完成率")
+    private String completionRate;
 }

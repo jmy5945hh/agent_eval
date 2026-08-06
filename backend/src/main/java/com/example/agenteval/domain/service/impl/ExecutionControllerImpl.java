@@ -7,14 +7,13 @@ import cn.hutool.core.util.ObjUtil;
 import com.example.agenteval.application.dto.request.record.RecordListRequest;
 import com.example.agenteval.application.dto.response.record.RecordListResponse;
 import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
-import com.example.agenteval.application.dto.response.task.TaskResponse;
 import com.example.agenteval.domain.model.*;
 import com.example.agenteval.domain.model.excel.RecordListExcel;
 import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.RunScore;
 import com.example.agenteval.domain.repository.*;
-import com.example.agenteval.domain.service.RecordQueryService;
+import com.example.agenteval.domain.service.ExecutionController;
 import com.example.agenteval.domain.service.specification.EvaluationTaskPOSpecs;
 import com.example.agenteval.infrastructure.constant.ExcelConstant;
 import com.example.agenteval.infrastructure.enums.CaseRunStatusEnum;
@@ -27,16 +26,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,7 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 测评记录查询服务实现 — {@link RecordQueryService} 的默认实现。
+ * 测评记录查询服务实现 — {@link ExecutionController} 的默认实现。
  *
  * <h4>职责</h4>
  * <ul>
@@ -54,98 +53,35 @@ import java.util.stream.Collectors;
  *   <li>记录详情聚合：将任务信息、执行统计、评分汇总组装为完整视图。</li>
  * </ul>
  *
- * @see RecordQueryService
+ * @see ExecutionController
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class RecordQueryServiceImpl implements RecordQueryService {
+public class ExecutionControllerImpl implements ExecutionController {
 
+    private static final Integer SCALE_FORE = 4;
+    private static final String PERCENT = "%";
     private final EvaluationTaskPORespository taskRepository;
     private final TaskCaseRunPORespository caseRunRepository;
     private final TaskCaseScorePORespository caseScoreRepository;
     private final AgentInfoPORespository agentInfoPORespository;
     private final ModelConfigPORespository modelConfigPORespository;
-
     @Value("${temp-file_path}")
     private String tempFilePath;
-
-    // ==================== 分页查询 ====================
-
-    /**
-     * 分页查询历史测评记录。
-     * <p>通过 {@link Specification} 动态构建筛选条件，按创建时间倒序排列。</p>
-     */
-    @Override
-    public Page<TaskResponse> listRecords(int page, int size,
-                                          String agentId, String modelId,
-                                          String status,
-                                          LocalDateTime dateFrom, LocalDateTime dateTo) {
-        Specification<EvaluationTaskPO> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-
-            if (agentId != null && !agentId.isEmpty()) {
-                predicates.add(cb.equal(root.get("agentId"), Integer.parseInt(agentId)));
-            }
-            if (modelId != null && !modelId.isEmpty()) {
-                predicates.add(cb.equal(root.get("modelId"), Integer.parseInt(modelId)));
-            }
-            if (status != null && !status.isEmpty()) {
-                predicates.add(cb.equal(root.get("status"), mapTaskStatus(status)));
-            }
-            if (dateFrom != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createTime"), dateFrom));
-            }
-            if (dateTo != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("createTime"), dateTo));
-            }
-
-            return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
-        };
-
-        // 按创建时间倒序
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createTime"));
-        Page<EvaluationTaskPO> result = taskRepository.findAll(spec, pageRequest);
-
-        List<TaskResponse> list = result.getContent().stream()
-                .map(TaskResponse::from)
-                .collect(Collectors.toList());
-
-        log.debug("Listed records: page={}, size={}, total={}", page, size, result.getTotalElements());
-        return new PageImpl<>(list, pageRequest, result.getTotalElements());
-    }
-
-    // ==================== 详情查询 ====================
-
-    /**
-     * 查询测评记录完整详情。
-     * <p>聚合任务基本信息、所有执行记录（含状态/耗时/Token/错误信息/评分），
-     * 一次性返回完整视图。</p>
-     */
-    @Override
-    public TaskResponse getRecordDetail(Long taskId) {
-        EvaluationTaskPO task = taskRepository.findById(taskId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("任务不存在: " + taskId));
-
-        // 查询所有执行记录
-        List<TaskCaseRunPO> runEntities = caseRunRepository.findByTaskId(taskId.intValue());
-
-        // 转换执行记录 → CaseRun（含评分）
-        List<CaseRun> runs = runEntities.stream()
-                .map(this::toCaseRun)
-                .collect(Collectors.toList());
-
-        log.debug("Loaded record detail: taskId={}, runs={}", taskId, runs.size());
-        return TaskResponse.from(task).withRuns(runs);
-    }
 
     @Override
     public SummaryDataResponse summaryData() {
         //全部
         long count = taskRepository.count();
         //完成任务
-        int finishCount = taskRepository.countByStatus(TaskStatusEnum.RUNNING.getStatus());
+        int completionCount = taskRepository.countByStatus(TaskStatusEnum.RUNNING.getStatus());
+        //完成率
+        BigDecimal countDecimal = BigDecimal.valueOf(completionCount);
+        BigDecimal completionDecimal = BigDecimal.valueOf(completionCount);
+        String completionRate = completionDecimal.divide(countDecimal, SCALE_FORE, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString().concat(PERCENT);
         //执行中
         List<EvaluationTaskPO> byStatus = taskRepository.findByStatus(TaskStatusEnum.RUNNING.getStatus());
         //队列中的案例
@@ -155,8 +91,9 @@ public class RecordQueryServiceImpl implements RecordQueryService {
         //近30天平均得分
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         Double avg = taskRepository.findAvgScoreOfCompletedTasksInLast30Days(TaskStatusEnum.COMPLETED.getStatus(), thirtyDaysAgo);
-        return SummaryDataResponse.builder().taskCount((int) count).finishCount(finishCount).runCount(CollUtil.isEmpty(byStatus) ? 0 : byStatus.size())
-                .queueCases((int) queueCase).averageScore(ObjUtil.isNull(avg) ? 0 : avg.intValue()).build();
+        return SummaryDataResponse.builder().taskCount((int) count).completionCount(completionCount).runCount(CollUtil.isEmpty(byStatus) ? 0 : byStatus.size())
+                .queueCases((int) queueCase).averageScore(ObjUtil.isNull(avg) ? 0 : avg.intValue())
+                .completionRate(completionRate).build();
     }
 
     @Override
