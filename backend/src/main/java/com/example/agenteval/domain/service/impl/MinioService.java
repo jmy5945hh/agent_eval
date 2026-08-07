@@ -4,18 +4,20 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import com.example.agenteval.domain.service.OSService;
 import com.example.agenteval.infrastructure.config.MinioConfig;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import io.minio.*;
+import io.minio.errors.ErrorResponseException;
+import io.minio.errors.MinioException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 @Service
 @RequiredArgsConstructor
@@ -137,5 +139,28 @@ public class MinioService implements OSService {
             log.error("删除文件[{}]出现异常，异常为:[{}]", fileName, e.getMessage(), e);
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean checkFileExist(String fileName) {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(minioConfig.getBucket())
+                            .object(fileName)
+                            .build()
+            );
+            // 如果没有抛出异常，说明文件存在
+            return true;
+        } catch (ErrorResponseException e) {
+            // 关键：通过错误码 "NoSuchKey" 精确判断文件不存在
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                return false;
+            }
+            throw new RuntimeException("检查文件存在性时发生错误", e);
+        } catch (MinioException | IOException | InvalidKeyException | NoSuchAlgorithmException e) {
+            throw new RuntimeException("检查文件存在性时发生错误", e);
+        }
+
     }
 }

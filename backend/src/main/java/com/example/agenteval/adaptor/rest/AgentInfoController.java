@@ -6,6 +6,7 @@ import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.agent.AgentListResponse;
 import com.example.agenteval.application.dto.response.agent.AgentVersionListResponse;
 import com.example.agenteval.domain.service.AgentDomainService;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -27,6 +28,7 @@ import javax.validation.Valid;
 @RequestMapping("/api/agents")
 @RequiredArgsConstructor
 @Api(tags = "Agent配置控制器")
+@ApiSupport(order = 2)
 public class AgentInfoController {
 
     private final AgentDomainService agentDomainService;
@@ -40,7 +42,7 @@ public class AgentInfoController {
             @Valid @RequestBody AgentCreateRequest request) {
         log.info("Creating agent: name={}", request.getAgentName());
         agentDomainService.createAgent(request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**
@@ -55,7 +57,7 @@ public class AgentInfoController {
     public ResponseEntity<CommonResponse<Void>> createAgentVersion(@ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId, @Valid @RequestBody AgentVersionCreateRequest request) {
         log.info("Creating agent version: agentId={},version={}", agentId, request.getVersion());
         agentDomainService.createAgentVersion(agentId, request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
 
@@ -69,7 +71,7 @@ public class AgentInfoController {
             @Valid @RequestBody AgentUpdateRequest request) {
         log.info("Updating agent: id={}, name={}", agentId, request.getAgentName());
         agentDomainService.updateAgent(agentId, request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**
@@ -82,7 +84,7 @@ public class AgentInfoController {
             @Valid @RequestBody AgentVersionUpdateRequest request) {
         log.info("Updating agent: agent={}, agentVersionId={}", agentId, agentVersionId);
         agentDomainService.updateAgentVersion(agentId, agentVersionId, request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
 
@@ -95,7 +97,7 @@ public class AgentInfoController {
         log.info("Deleting agent: id={}", agentId);
         try {
             agentDomainService.deleteAgent(agentId);
-            return ResponseEntity.ok(CommonResponse.success());
+            return ResponseEntity.ok(CommonResponse.success(null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(CommonResponse.<Void>builder().code(409).message(e.getMessage()).build());
@@ -112,7 +114,7 @@ public class AgentInfoController {
             @ApiParam(value = "agent版本的id", required = true) @PathVariable Integer agentVersionId) {
         log.info("Deleting agent version:  agentVersionId={}", agentVersionId);
         agentDomainService.deleteVersion(agentVersionId);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**

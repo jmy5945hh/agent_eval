@@ -1,11 +1,9 @@
 package com.example.agenteval.domain.service;
 
-import com.example.agenteval.application.dto.request.cases.CaseCreateRequest;
-import com.example.agenteval.application.dto.request.cases.CaseUpdateRequest;
-import com.example.agenteval.domain.model.EvaluationCasePO;
-import com.example.agenteval.domain.model.pojo.CaseFile;
-
-import java.util.List;
+import com.example.agenteval.application.dto.request.cases.CaseListRequest;
+import com.example.agenteval.application.dto.request.cases.CaseRequest;
+import com.example.agenteval.application.dto.response.evalcase.CaseListResponse;
+import org.springframework.data.domain.Page;
 
 /**
  * 案例领域服务接口 — 负责案例的 CRUD、标准答案管理、关联任务查询。
@@ -29,7 +27,7 @@ public interface CaseDomainService {
      * @param request 创建请求
      * @return 创建后的案例实体
      */
-    EvaluationCasePO createCase(CaseCreateRequest request);
+    void createCase(CaseRequest request);
 
     /**
      * 编辑案例。
@@ -38,7 +36,7 @@ public interface CaseDomainService {
      * @param request 编辑请求
      * @return 更新后的案例实体
      */
-    EvaluationCasePO updateCase(CaseUpdateRequest request);
+    void updateCase(Integer caseId, CaseRequest request);
 
     /**
      * 删除案例。
@@ -46,16 +44,13 @@ public interface CaseDomainService {
      *
      * @param caseId 案例 ID
      */
-    void deleteCase(Long caseId);
-
-    // ==================== 关联查询 ====================
+    void deleteCase(Integer caseId);
 
     /**
-     * 查询案例被哪些测评任务引用。
-     * <p>用于删除前的依赖检查。</p>
+     * 查询案例列表。
      *
-     * @param caseId 案例 ID
-     * @return 关联的任务 ID 列表（含任务简要信息）
+     * @param request 查询请求
+     * @return 列表
      */
-    List<String> getReferencedTaskIds(Long caseId);
+    Page<CaseListResponse> caseList(CaseListRequest request);
 }

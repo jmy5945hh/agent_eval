@@ -7,6 +7,7 @@ import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
 import com.example.agenteval.application.dto.response.model.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.service.ModelConfigDomainService;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -31,6 +32,7 @@ import javax.validation.Valid;
 @RequestMapping("/api/models")
 @RequiredArgsConstructor
 @Api(tags = "模型配置")
+@ApiSupport(order = 3)
 public class ModelConfigController {
 
     private final ModelConfigDomainService modelConfigDomainService;
@@ -44,7 +46,7 @@ public class ModelConfigController {
             @Valid @RequestBody ModelConfigRequest request) {
         log.info("Creating model: name={}, scoring={}", request.getModelName(), request.getScoring());
         modelConfigDomainService.createModel(request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**
@@ -57,7 +59,7 @@ public class ModelConfigController {
             @Valid @RequestBody ModelConfigRequest request) {
         log.info("Updating model: id={}, name={}", id, request.getModelName());
         ModelConfigPO updated = modelConfigDomainService.updateModel(id, request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**
@@ -69,7 +71,7 @@ public class ModelConfigController {
         log.info("Deleting model: id={}", id);
         try {
             modelConfigDomainService.deleteModel(id);
-            return ResponseEntity.ok(CommonResponse.success());
+            return ResponseEntity.ok(CommonResponse.success(null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(CommonResponse.<Void>builder().code(409).message(e.getMessage()).build());

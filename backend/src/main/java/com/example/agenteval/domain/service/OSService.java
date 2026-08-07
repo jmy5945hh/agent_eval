@@ -6,6 +6,7 @@ public interface OSService {
 
     /**
      * 将文字作为文件上场到对象存储
+     *
      * @param context
      * @return
      */
@@ -13,6 +14,7 @@ public interface OSService {
 
     /**
      * 上传文件
+     *
      * @param fileName
      * @param inputStream
      */
@@ -20,6 +22,7 @@ public interface OSService {
 
     /**
      * 获取文件
+     *
      * @param fileName
      * @return
      */
@@ -27,6 +30,7 @@ public interface OSService {
 
     /**
      * 获取并读取文件内容
+     *
      * @param fileName
      * @return
      */
@@ -34,7 +38,16 @@ public interface OSService {
 
     /**
      * 删除文件
+     *
      * @param fileName
      */
     void deleteFile(String fileName);
+
+    /**
+     * 检查文件是否存在
+     *
+     * @param fileName
+     * @return
+     */
+    boolean checkFileExist(String fileName);
 }

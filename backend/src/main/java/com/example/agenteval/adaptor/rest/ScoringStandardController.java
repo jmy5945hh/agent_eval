@@ -5,6 +5,7 @@ import com.example.agenteval.application.dto.request.score.ScoringStandardReques
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.score.ScoringStandardListResponse;
 import com.example.agenteval.domain.service.ScoringStandardDomainService;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -28,6 +29,7 @@ import javax.validation.Valid;
 @RequestMapping("/api/scoring-standards")
 @RequiredArgsConstructor
 @Api(tags = "评分标准控制器")
+@ApiSupport(order = 4)
 public class ScoringStandardController {
 
     private final ScoringStandardDomainService scoringStandardDomainService;
@@ -42,7 +44,7 @@ public class ScoringStandardController {
         log.info("Creating scoring standard: version={}, dimensions={}",
                 request.getVersion(), request.getDimensions().size());
         scoringStandardDomainService.createStandard(request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**
@@ -55,7 +57,7 @@ public class ScoringStandardController {
             @Valid @RequestBody ScoringStandardRequest request) {
         log.info("Updating scoring standard: id={}, version={}", id, request.getVersion());
         scoringStandardDomainService.updateStandard(id, request);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     /**
@@ -67,7 +69,7 @@ public class ScoringStandardController {
         log.info("Deleting scoring standard: id={}", id);
         try {
             scoringStandardDomainService.deleteStandard(id);
-            return ResponseEntity.ok(CommonResponse.success());
+            return ResponseEntity.ok(CommonResponse.success(null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(CommonResponse.<Void>builder().code(409).message(e.getMessage()).build());

@@ -5,6 +5,7 @@ import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.record.RecordListResponse;
 import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
 import com.example.agenteval.domain.service.ExportService;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import javax.validation.Valid;
 @RequestMapping("/api/records")
 @RequiredArgsConstructor
 @Api(tags = "执行中心控制器")
+@ApiSupport(order = 7)
 public class ExecutionController {
 
     private final com.example.agenteval.domain.service.ExecutionController executionController;

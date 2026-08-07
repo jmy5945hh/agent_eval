@@ -9,6 +9,7 @@ import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.service.TaskDomainService;
 import com.example.agenteval.infrastructure.executor.AgentExecutorService;
 import com.example.agenteval.infrastructure.scoring.ScoringClientService;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Api(tags = "评测任务控制器")
 @ApiIgnore
+@ApiSupport(order = 6)
 public class TaskController {
 
     private final TaskDomainService taskDomainService;

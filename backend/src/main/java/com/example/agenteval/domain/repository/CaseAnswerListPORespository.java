@@ -1,7 +1,6 @@
 package com.example.agenteval.domain.repository;
 
 import com.example.agenteval.domain.model.CaseAnswerListPO;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +19,5 @@ public interface CaseAnswerListPORespository extends BaseRepository<CaseAnswerLi
      *
      * @param caseId 案例业务 ID
      */
-    @Transactional
-    void deleteByCaseId(Integer caseId);
+    int deleteByCaseId(Integer caseId);
 }

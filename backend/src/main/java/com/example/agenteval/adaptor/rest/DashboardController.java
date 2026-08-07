@@ -6,6 +6,7 @@ import com.example.agenteval.domain.model.TaskCaseRunPO;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.TaskCaseRunPORespository;
+import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Api(tags = "工作台控制器")
 @ApiIgnore
+@ApiSupport(order = 8)
 public class DashboardController {
 
     private final EvaluationTaskPORespository taskRepository;
