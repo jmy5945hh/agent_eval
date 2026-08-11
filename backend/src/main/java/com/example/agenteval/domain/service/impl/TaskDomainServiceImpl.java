@@ -125,7 +125,8 @@ public class TaskDomainServiceImpl implements TaskDomainService {
     public void stopHook(StopHookRequest stopHookRequest) {
         Integer taskId = agentTaskService.caseFinish(stopHookRequest.getSessionId(), stopHookRequest.getCwd());
         AgentTaskRunReturn agentTaskRunReturn = agentTaskService.runNextCase(taskId);
-        TaskCaseRunPO taskCaseRunPO = TaskCaseRunPO.builder().id(agentTaskRunReturn.getTaskCaseRunId()).status(CaseRunStatusEnum.RUNNING.getStatus()).build();
+        TaskCaseRunPO taskCaseRunPO = TaskCaseRunPO.builder().status(CaseRunStatusEnum.RUNNING.getStatus()).build();
+        taskCaseRunPO.setId(agentTaskRunReturn.getTaskCaseRunId());
         taskCaseRunPORespository.save(taskCaseRunPO);
     }
 

@@ -102,7 +102,7 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         //任务
         EvaluationTaskPO evaluationTaskPO = evaluationTaskPORespository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("任务不存在: " + taskId));
         //任务案例关联表
-        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.finByNextRunCase(taskId);
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findFirstByTaskIdAndStatusOrderByCreateTimeDesc(taskId, CaseRunStatusEnum.QUEUED.getStatus());
         if (ObjUtil.isNull(taskCaseRunPO)) {
             //TODO 最后一个,进行测评
         }

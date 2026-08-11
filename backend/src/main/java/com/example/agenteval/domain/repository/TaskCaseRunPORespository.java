@@ -1,7 +1,6 @@
 package com.example.agenteval.domain.repository;
 
 import com.example.agenteval.domain.model.TaskCaseRunPO;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -27,6 +26,5 @@ public interface TaskCaseRunPORespository extends BaseRepository<TaskCaseRunPO, 
 
     TaskCaseRunPO findBySessionId(String sessionId);
 
-    @Query("SELECT t FROM TaskCaseRunPO t WHERE  t.taskId = :taskId and t.status=1 order by t.createTime desc limit 1")
-    TaskCaseRunPO finByNextRunCase(Integer taskId);
+    TaskCaseRunPO findFirstByTaskIdAndStatusOrderByCreateTimeDesc(Integer taskId, Integer status);
 }
