@@ -91,8 +91,8 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         //入库
         TaskCaseRunPO updateTaskCaseRun = TaskCaseRunPO.builder().status(CaseRunStatusEnum.SUCCESS.getStatus()).attempts(0).rounds(1)
                 .tokensIn(qwenCaseRun.getTokenIn()).tokensOut(qwenCaseRun.getTokenOut()).durationMs(qwenCaseRun.getDurationMs())
-                .errorInfoKey(errorFlag ? errorLog.getName() : "").trajectoryKey(sessionJsonL.getName())
-                .id(taskCaseRunPO.getId()).build();
+                .errorInfoKey(errorFlag ? errorLog.getName() : "").trajectoryKey(sessionJsonL.getName()).build();
+        updateTaskCaseRun.setId(taskCaseRunPO.getId());
         taskCaseRunPORespository.save(updateTaskCaseRun);
         return taskCaseRunPO.getTaskId();
     }
