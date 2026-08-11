@@ -4,7 +4,7 @@ import com.example.agenteval.application.dto.BasePageRequest;
 import com.example.agenteval.application.dto.request.score.ScoringStandardRequest;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.score.ScoringStandardListResponse;
-import com.example.agenteval.domain.service.ScoringStandardDomainService;
+import com.example.agenteval.domain.service.ScoringStandardService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,7 +32,7 @@ import javax.validation.Valid;
 @ApiSupport(order = 4)
 public class ScoringStandardController {
 
-    private final ScoringStandardDomainService scoringStandardDomainService;
+    private final ScoringStandardService scoringStandardService;
 
     /**
      * 新增评分标准版本。后端校验权重合计为 100%，不通过返回 400。
@@ -43,7 +43,7 @@ public class ScoringStandardController {
             @Valid @RequestBody ScoringStandardRequest request) {
         log.info("Creating scoring standard: version={}, dimensions={}",
                 request.getVersion(), request.getDimensions().size());
-        scoringStandardDomainService.createStandard(request);
+        scoringStandardService.createStandard(request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -56,7 +56,7 @@ public class ScoringStandardController {
             @ApiParam(value = "评分标准id", required = true) @PathVariable Integer id,
             @Valid @RequestBody ScoringStandardRequest request) {
         log.info("Updating scoring standard: id={}, version={}", id, request.getVersion());
-        scoringStandardDomainService.updateStandard(id, request);
+        scoringStandardService.updateStandard(id, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -68,7 +68,7 @@ public class ScoringStandardController {
     public ResponseEntity<CommonResponse<Void>> deleteStandard(@ApiParam(value = "评分标准id", required = true) @PathVariable Integer id) {
         log.info("Deleting scoring standard: id={}", id);
         try {
-            scoringStandardDomainService.deleteStandard(id);
+            scoringStandardService.deleteStandard(id);
             return ResponseEntity.ok(CommonResponse.success(null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -80,7 +80,7 @@ public class ScoringStandardController {
     @PostMapping("/list")
     public ResponseEntity<CommonResponse<Page<ScoringStandardListResponse>>> scoringStandardList(@Valid @RequestBody BasePageRequest basePageRequest) {
         log.info("Listing scoring standard");
-        return ResponseEntity.ok(CommonResponse.success(scoringStandardDomainService.scoringStandardList(basePageRequest)));
+        return ResponseEntity.ok(CommonResponse.success(scoringStandardService.scoringStandardList(basePageRequest)));
     }
 
 }

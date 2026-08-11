@@ -3,6 +3,7 @@ package com.example.agenteval.domain.repository;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -36,4 +37,8 @@ public interface ModelConfigPORespository extends BaseRepository<ModelConfigPO, 
      * @return
      */
     List<ModelConfigPO> findByIdIn(List<Integer> modelIds);
+
+    List<ModelConfigPO> findByEnabled(byte enabled, Sort sort);
+
+    ModelConfigPO findByScoring(byte scoring);
 }

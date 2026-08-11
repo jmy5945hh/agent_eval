@@ -4,6 +4,7 @@ import com.example.agenteval.domain.model.AgentInfoPO;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
@@ -46,4 +47,6 @@ public interface AgentInfoPORespository extends BaseRepository<AgentInfoPO, Inte
      * @return
      */
     List<AgentInfoPO> findByIdIn(List<Integer> agentIds);
+
+    List<AgentInfoPO> findByEnabled(byte enabled, Sort sort);
 }

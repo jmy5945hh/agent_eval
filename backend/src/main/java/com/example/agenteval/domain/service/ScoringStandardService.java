@@ -16,7 +16,7 @@ import org.springframework.data.domain.Page;
  *   <li>设为当前版本时，其他版本的 isCurrent 自动置为 false。</li>
  * </ul>
  */
-public interface ScoringStandardDomainService {
+public interface ScoringStandardService {
 
     /**
      * 新增评分标准版本。

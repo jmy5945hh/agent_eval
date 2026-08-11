@@ -13,6 +13,11 @@ import java.util.List;
 @Data
 @ApiModel("评分标准请求体")
 public class ScoringStandardRequest {
+
+    @NotBlank(message = "评分标准名称不能为空")
+    @ApiModelProperty(value = "评分标准名称", required = true)
+    private String scoringStandardName;
+
     @NotBlank(message = "版本号不能为空")
     @ApiModelProperty(value = "版本号", required = true)
     private String version;

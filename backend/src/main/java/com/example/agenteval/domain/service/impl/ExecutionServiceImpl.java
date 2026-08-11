@@ -13,7 +13,7 @@ import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.RunScore;
 import com.example.agenteval.domain.repository.*;
-import com.example.agenteval.domain.service.ExecutionController;
+import com.example.agenteval.domain.service.ExecutionService;
 import com.example.agenteval.domain.service.specification.EvaluationTaskPOSpecs;
 import com.example.agenteval.infrastructure.constant.ExcelConstant;
 import com.example.agenteval.infrastructure.enums.CaseRunStatusEnum;
@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 测评记录查询服务实现 — {@link ExecutionController} 的默认实现。
+ * 测评记录查询服务实现 — {@link ExecutionService} 的默认实现。
  *
  * <h4>职责</h4>
  * <ul>
@@ -53,13 +53,13 @@ import java.util.stream.Collectors;
  *   <li>记录详情聚合：将任务信息、执行统计、评分汇总组装为完整视图。</li>
  * </ul>
  *
- * @see ExecutionController
+ * @see ExecutionService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ExecutionControllerImpl implements ExecutionController {
+public class ExecutionServiceImpl implements ExecutionService {
 
     private static final Integer SCALE_FORE = 4;
     private static final String PERCENT = "%";

@@ -5,7 +5,7 @@ import com.example.agenteval.application.dto.request.agent.*;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.agent.AgentListResponse;
 import com.example.agenteval.application.dto.response.agent.AgentVersionListResponse;
-import com.example.agenteval.domain.service.AgentDomainService;
+import com.example.agenteval.domain.service.AgentService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,7 +31,7 @@ import javax.validation.Valid;
 @ApiSupport(order = 2)
 public class AgentInfoController {
 
-    private final AgentDomainService agentDomainService;
+    private final AgentService agentService;
 
     /**
      * 新增 Agent 产品。name 必填且全局唯一，status 默认为 enabled。
@@ -41,7 +41,7 @@ public class AgentInfoController {
     public ResponseEntity<CommonResponse<Void>> createAgent(
             @Valid @RequestBody AgentCreateRequest request) {
         log.info("Creating agent: name={}", request.getAgentName());
-        agentDomainService.createAgent(request);
+        agentService.createAgent(request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -56,7 +56,7 @@ public class AgentInfoController {
     @PostMapping("/{agentId}")
     public ResponseEntity<CommonResponse<Void>> createAgentVersion(@ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId, @Valid @RequestBody AgentVersionCreateRequest request) {
         log.info("Creating agent version: agentId={},version={}", agentId, request.getVersion());
-        agentDomainService.createAgentVersion(agentId, request);
+        agentService.createAgentVersion(agentId, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -70,7 +70,7 @@ public class AgentInfoController {
             @ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId,
             @Valid @RequestBody AgentUpdateRequest request) {
         log.info("Updating agent: id={}, name={}", agentId, request.getAgentName());
-        agentDomainService.updateAgent(agentId, request);
+        agentService.updateAgent(agentId, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -83,7 +83,7 @@ public class AgentInfoController {
             @ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId, @ApiParam(value = "agent版本的id", required = true) @PathVariable Integer agentVersionId,
             @Valid @RequestBody AgentVersionUpdateRequest request) {
         log.info("Updating agent: agent={}, agentVersionId={}", agentId, agentVersionId);
-        agentDomainService.updateAgentVersion(agentId, agentVersionId, request);
+        agentService.updateAgentVersion(agentId, agentVersionId, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -96,7 +96,7 @@ public class AgentInfoController {
     public ResponseEntity<CommonResponse<Void>> deleteAgent(@ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId) {
         log.info("Deleting agent: id={}", agentId);
         try {
-            agentDomainService.deleteAgent(agentId);
+            agentService.deleteAgent(agentId);
             return ResponseEntity.ok(CommonResponse.success(null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -113,7 +113,7 @@ public class AgentInfoController {
     public ResponseEntity<CommonResponse<Void>> deleteVersion(
             @ApiParam(value = "agent版本的id", required = true) @PathVariable Integer agentVersionId) {
         log.info("Deleting agent version:  agentVersionId={}", agentVersionId);
-        agentDomainService.deleteVersion(agentVersionId);
+        agentService.deleteVersion(agentVersionId);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -126,7 +126,7 @@ public class AgentInfoController {
     @ApiOperation(value = "查询agent列表")
     @PostMapping("/list")
     public ResponseEntity<CommonResponse<Page<AgentListResponse>>> agentList(@Valid AgentListRequest request) {
-        return ResponseEntity.ok(CommonResponse.success(agentDomainService.agentList(request)));
+        return ResponseEntity.ok(CommonResponse.success(agentService.agentList(request)));
     }
 
     /**
@@ -138,7 +138,7 @@ public class AgentInfoController {
     @ApiOperation(value = "根据Id获取agent信息")
     @PostMapping("/{agentId}/info")
     public ResponseEntity<CommonResponse<AgentListResponse>> agentInfo(@ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId) {
-        return ResponseEntity.ok(CommonResponse.success(agentDomainService.agentInfo(agentId)));
+        return ResponseEntity.ok(CommonResponse.success(agentService.agentInfo(agentId)));
     }
 
     /**
@@ -150,7 +150,7 @@ public class AgentInfoController {
     @ApiOperation(value = "根据id查询agent版本信息列表")
     @PostMapping("/{agentId}/version/list")
     public ResponseEntity<CommonResponse<Page<AgentVersionListResponse>>> agentVersionList(@ApiParam(value = "agent的id", required = true) @PathVariable Integer agentId, @RequestBody BasePageRequest basePageRequest) {
-        return ResponseEntity.ok(CommonResponse.success(agentDomainService.agentVersionList(agentId, basePageRequest)));
+        return ResponseEntity.ok(CommonResponse.success(agentService.agentVersionList(agentId, basePageRequest)));
     }
 
     /**
@@ -162,6 +162,6 @@ public class AgentInfoController {
     @ApiOperation(value = "根据Id查询agent版本信息")
     @PostMapping("/version/info/{agentVersionId}")
     public ResponseEntity<CommonResponse<AgentVersionListResponse>> agentVersionInfo(@ApiParam(value = "agent版本的id", required = true) @PathVariable Integer agentVersionId) {
-        return ResponseEntity.ok(CommonResponse.success(agentDomainService.agentVersionInfo(agentVersionId)));
+        return ResponseEntity.ok(CommonResponse.success(agentService.agentVersionInfo(agentVersionId)));
     }
 }

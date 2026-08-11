@@ -40,4 +40,14 @@ public class InfrastructureServiceImpl implements InfrastructureService {
         }
         return fileName;
     }
+
+    @Override
+    public String readFile(String fileKey) {
+        try {
+            return minioService.getAndReadFile(fileKey);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 }

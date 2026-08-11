@@ -16,7 +16,7 @@ import org.springframework.data.domain.Page;
  *   <li>删除前需检查是否被测评任务引用，有引用则提示确认后标记删除。</li>
  * </ul>
  */
-public interface CaseDomainService {
+public interface EvaluationCaseService {
 
     // ==================== 案例 CRUD ====================
 

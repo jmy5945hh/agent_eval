@@ -11,7 +11,7 @@ import com.example.agenteval.domain.model.ScoringStandardPO;
 import com.example.agenteval.domain.model.pojo.ScoringDimension;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.ScoringStandardPORespository;
-import com.example.agenteval.domain.service.ScoringStandardDomainService;
+import com.example.agenteval.domain.service.ScoringStandardService;
 import com.example.agenteval.infrastructure.util.MapUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 评分标准领域服务实现 — {@link ScoringStandardDomainService} 的默认实现。
+ * 评分标准领域服务实现 — {@link ScoringStandardService} 的默认实现。
  *
  * <h4>职责</h4>
  * <ul>
@@ -38,12 +38,12 @@ import java.util.List;
  * <h4>维度存储说明</h4>
  * <p>评分维度 {@link ScoringDimension} 列表序列化为 JSON 字符串，
  *
- * @see ScoringStandardDomainService
+ * @see ScoringStandardService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainService {
+public class ScoringStandardServiceImpl implements ScoringStandardService {
 
     private final ScoringStandardPORespository standardRepository;
     private final EvaluationTaskPORespository evaluationTaskRepository;
@@ -74,6 +74,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
         }
 
         ScoringStandardPO entity = ScoringStandardPO.builder()
+                .scoringStandardName(request.getScoringStandardName())
                 .version(request.getVersion())
                 .isCurrent(MapUtil.mapBoolean(current, false))
                 .note(request.getNote())
@@ -106,6 +107,10 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
                 clearCurrentVersions();
             }
             entity.setIsCurrent(current ? (byte) 1 : (byte) 0);
+        }
+
+        if (StrUtil.isNotBlank(request.getScoringStandardName())) {
+            entity.setScoringStandardName(request.getScoringStandardName());
         }
 
         // 仅更新 note 和 dimensions（版本号不可修改）
@@ -156,6 +161,7 @@ public class ScoringStandardDomainServiceImpl implements ScoringStandardDomainSe
             List<ScoringDimension> scoringDimension = JSONUtil.toBean(item.getDimensions(), new TypeReference<List<ScoringDimension>>() {
             }, true);
             returnList.add(ScoringStandardListResponse.builder()
+                    .scoringStandardName(item.getScoringStandardName())
                     .id(item.getId())
                     .version(item.getVersion())
                     .note(item.getNote())

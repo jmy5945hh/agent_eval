@@ -120,3 +120,5 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /api-docs
+
+task-run-folder: d:/temp

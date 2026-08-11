@@ -13,7 +13,7 @@ import com.example.agenteval.domain.repository.CaseAnswerListPORespository;
 import com.example.agenteval.domain.repository.EnumInfoPORespository;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
 import com.example.agenteval.domain.repository.TaskCaseRunPORespository;
-import com.example.agenteval.domain.service.CaseDomainService;
+import com.example.agenteval.domain.service.EvaluationCaseService;
 import com.example.agenteval.domain.service.mapstruct.EvaluationCaseMapper;
 import com.example.agenteval.domain.service.specification.EvaluationCasePOSpecs;
 import com.example.agenteval.infrastructure.enums.DifficultyEnum;
@@ -31,7 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 案例领域服务实现 — {@link CaseDomainService} 的默认实现。
+ * 案例领域服务实现 — {@link EvaluationCaseService} 的默认实现。
  *
  * <h4>职责</h4>
  * <ul>
@@ -40,12 +40,12 @@ import java.util.stream.Collectors;
  *   <li>删除依赖检查：删除前检查案例是否被测评任务引用。</li>
  * </ul>
  *
- * @see CaseDomainService
+ * @see EvaluationCaseService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CaseDomainServiceImpl implements CaseDomainService {
+public class EvaluationCaseServiceImpl implements EvaluationCaseService {
 
     private final EvaluationCasePORespository caseRepository;
     private final CaseAnswerListPORespository caseAnswerListPORespository;

@@ -8,7 +8,7 @@ import com.example.agenteval.application.dto.response.model.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.ModelConfigPORespository;
-import com.example.agenteval.domain.service.ModelConfigDomainService;
+import com.example.agenteval.domain.service.ModelConfigService;
 import com.example.agenteval.domain.service.OSService;
 import com.example.agenteval.domain.service.mapstruct.ModelConfigMapper;
 import com.example.agenteval.infrastructure.enums.ModelCallTypeEnum;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 模型配置领域服务实现 — {@link ModelConfigDomainService} 的默认实现。
+ * 模型配置领域服务实现 — {@link ModelConfigService} 的默认实现。
  *
  * <h4>职责</h4>
  * <ul>
@@ -40,12 +40,12 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li><b>评分模型</b>（scoring=1）：供评分阶段调用，对执行结果评定维度分。</li>
  * </ul>
  *
- * @see ModelConfigDomainService
+ * @see ModelConfigService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ModelConfigDomainServiceImpl implements ModelConfigDomainService {
+public class ModelConfigServiceImpl implements ModelConfigService {
 
     private final ModelConfigPORespository modelConfigRepository;
     private final EvaluationTaskPORespository evaluationTaskRepository;

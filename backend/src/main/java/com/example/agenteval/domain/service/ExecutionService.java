@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
  *   <li>时间范围：按创建时间范围过滤。</li>
  * </ul>
  */
-public interface ExecutionController {
+public interface ExecutionService {
 
     /**
      * 汇总数据

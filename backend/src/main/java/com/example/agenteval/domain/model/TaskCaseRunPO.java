@@ -65,4 +65,10 @@ public class TaskCaseRunPO extends BaseEntity {
      */
     @Column(nullable = true, length = 50, name = "trajectory_key")
     private String trajectoryKey;
+
+    @Column(nullable = true, length = 100, name = "session_id")
+    private String sessionId;
+
+    @Column(nullable = true, length = 200, name = "repo_path")
+    private String repoPath;
 }

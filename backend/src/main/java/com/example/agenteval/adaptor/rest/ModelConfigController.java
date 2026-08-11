@@ -6,7 +6,7 @@ import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.model.ModelInfoResponse;
 import com.example.agenteval.application.dto.response.model.ModelListResponse;
 import com.example.agenteval.domain.model.ModelConfigPO;
-import com.example.agenteval.domain.service.ModelConfigDomainService;
+import com.example.agenteval.domain.service.ModelConfigService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +35,7 @@ import javax.validation.Valid;
 @ApiSupport(order = 3)
 public class ModelConfigController {
 
-    private final ModelConfigDomainService modelConfigDomainService;
+    private final ModelConfigService modelConfigService;
 
     /**
      * 新增模型配置。
@@ -45,7 +45,7 @@ public class ModelConfigController {
     public ResponseEntity<CommonResponse<Void>> createModel(
             @Valid @RequestBody ModelConfigRequest request) {
         log.info("Creating model: name={}, scoring={}", request.getModelName(), request.getScoring());
-        modelConfigDomainService.createModel(request);
+        modelConfigService.createModel(request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -58,7 +58,7 @@ public class ModelConfigController {
             @ApiParam(value = "模型配置ID", required = true) @PathVariable Integer id,
             @Valid @RequestBody ModelConfigRequest request) {
         log.info("Updating model: id={}, name={}", id, request.getModelName());
-        ModelConfigPO updated = modelConfigDomainService.updateModel(id, request);
+        ModelConfigPO updated = modelConfigService.updateModel(id, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -70,7 +70,7 @@ public class ModelConfigController {
     public ResponseEntity<CommonResponse<Void>> deleteModel(@ApiParam(value = "模型配置ID", required = true) @PathVariable Integer id) {
         log.info("Deleting model: id={}", id);
         try {
-            modelConfigDomainService.deleteModel(id);
+            modelConfigService.deleteModel(id);
             return ResponseEntity.ok(CommonResponse.success(null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -87,7 +87,7 @@ public class ModelConfigController {
     @ApiOperation(value = "分页查询模型列表")
     @PostMapping("/list")
     public ResponseEntity<CommonResponse<Page<ModelListResponse>>> modelList(@Valid @RequestBody ModelListRequest request) {
-        Page<ModelListResponse> modelListResponses = modelConfigDomainService.modelList(request);
+        Page<ModelListResponse> modelListResponses = modelConfigService.modelList(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success(modelListResponses));
     }
@@ -100,6 +100,6 @@ public class ModelConfigController {
     @ApiOperation(value = "根据id查询模型信息")
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<ModelInfoResponse>> modelInfo(@ApiParam(value = "模型配置ID", required = true) @PathVariable("id") Integer id) {
-        return ResponseEntity.ok(CommonResponse.success(modelConfigDomainService.modelInfo(id)));
+        return ResponseEntity.ok(CommonResponse.success(modelConfigService.modelInfo(id)));
     }
 }

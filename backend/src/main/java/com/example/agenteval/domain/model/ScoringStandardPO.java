@@ -16,6 +16,12 @@ import javax.persistence.Table;
 public class ScoringStandardPO extends BaseEntity {
 
     /**
+     * 评分标准名称,;
+     */
+    @Column(nullable = true, length = 100, name = "scoring_standard_name")
+    private String scoringStandardName;
+
+    /**
      * 版本号（如 v2.0）,;
      */
     @Column(nullable = true, length = 20)

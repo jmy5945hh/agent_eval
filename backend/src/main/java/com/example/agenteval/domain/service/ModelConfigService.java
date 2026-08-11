@@ -17,7 +17,7 @@ import org.springframework.data.domain.Page;
  *   <li>API Key 需加密存储。</li>
  * </ul>
  */
-public interface ModelConfigDomainService {
+public interface ModelConfigService {
 
     /**
      * 新增模型配置。
@@ -54,6 +54,7 @@ public interface ModelConfigDomainService {
 
     /**
      * 根据id查询模型信息
+     *
      * @param id
      * @return
      */

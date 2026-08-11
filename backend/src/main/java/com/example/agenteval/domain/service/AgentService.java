@@ -18,7 +18,7 @@ import javax.validation.Valid;
  *   <li>版本号在同一个 Agent 下唯一。</li>
  * </ul>
  */
-public interface AgentDomainService {
+public interface AgentService {
 
     // ==================== Agent 管理 ====================
 

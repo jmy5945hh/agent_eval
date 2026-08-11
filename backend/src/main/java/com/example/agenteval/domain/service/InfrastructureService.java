@@ -11,4 +11,5 @@ public interface InfrastructureService {
 
     String uploadFile(MultipartFile file);
 
+    String readFile(String fileKey);
 }

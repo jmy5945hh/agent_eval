@@ -11,7 +11,7 @@ import com.example.agenteval.domain.model.AgentVersionPO;
 import com.example.agenteval.domain.repository.AgentInfoPORespository;
 import com.example.agenteval.domain.repository.AgentVersionPORespository;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
-import com.example.agenteval.domain.service.AgentDomainService;
+import com.example.agenteval.domain.service.AgentService;
 import com.example.agenteval.domain.service.OSService;
 import com.example.agenteval.domain.service.mapstruct.AgentMapper;
 import com.example.agenteval.infrastructure.util.MapUtil;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Agent 领域服务实现 — {@link AgentDomainService} 的默认实现。
+ * Agent 领域服务实现 — {@link AgentService} 的默认实现。
  *
  * <h4>职责</h4>
  * <ul>
@@ -36,12 +36,12 @@ import java.util.List;
  *   <li>删除依赖检查：删除 Agent 前校验是否被测评任务引用。</li>
  * </ul>
  *
- * @see AgentDomainService
+ * @see AgentService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AgentDomainServiceImpl implements AgentDomainService {
+public class AgentServiceImpl implements AgentService {
 
     private final AgentInfoPORespository agentInfoRepository;
     private final AgentVersionPORespository agentVersionRepository;

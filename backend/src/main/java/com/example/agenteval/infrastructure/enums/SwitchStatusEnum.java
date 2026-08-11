@@ -8,28 +8,35 @@ public enum SwitchStatusEnum {
     /**
      * 启动
      */
-    ENABLE(1, "enable"),
+    ENABLE(1, "enable", (byte) 1),
 
     /**
      * 禁用
      */
-    DISABLED(0, "disabled"),
+    DISABLED(0, "disabled", (byte) 0),
     ;
 
     private final Integer status;
 
-    private final String status_name;
+    private final String statusName;
 
-    SwitchStatusEnum(Integer status, String status_name) {
+    private final byte byteStatus;
+
+    SwitchStatusEnum(Integer status, String statusName, byte byteStatus) {
         this.status = status;
-        this.status_name = status_name;
+        this.statusName = statusName;
+        this.byteStatus = byteStatus;
     }
 
     public Integer getStatus() {
         return status;
     }
 
-    public String getStatus_name() {
-        return status_name;
+    public String getStatusName() {
+        return statusName;
+    }
+
+    public byte getByteStatus() {
+        return byteStatus;
     }
 }

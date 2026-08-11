@@ -34,8 +34,14 @@ public class InfrastructureController {
     }
 
     @ApiOperation(value = "上传文件")
-    @PostMapping(path = "/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/file/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<String>> uploadFile(@NotNull(message = "file不能为空") @RequestPart(value = "file") MultipartFile file) {
         return ResponseEntity.ok(CommonResponse.success(infrastructureService.uploadFile(file)));
+    }
+
+    @ApiOperation("读取对象存储文件内容")
+    @GetMapping("/file/read")
+    public ResponseEntity<CommonResponse<String>> readOOSFileContent(@RequestParam("filekey") String fileKey) {
+        return ResponseEntity.ok(CommonResponse.success(infrastructureService.readFile(fileKey)));
     }
 }

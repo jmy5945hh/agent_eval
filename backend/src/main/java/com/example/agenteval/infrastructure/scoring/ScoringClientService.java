@@ -4,7 +4,10 @@ import com.example.agenteval.domain.model.EvaluationCasePO;
 import com.example.agenteval.domain.model.EvaluationTaskPO;
 import com.example.agenteval.domain.model.ScoringStandardPO;
 import com.example.agenteval.domain.model.TaskCaseRunPO;
-import com.example.agenteval.domain.model.pojo.*;
+import com.example.agenteval.domain.model.pojo.CaseFile;
+import com.example.agenteval.domain.model.pojo.CaseRun;
+import com.example.agenteval.domain.model.pojo.RunScore;
+import com.example.agenteval.domain.model.pojo.ScoringDimension;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
 import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
 import com.example.agenteval.domain.repository.ScoringStandardPORespository;
@@ -19,8 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -32,7 +39,7 @@ import java.util.concurrent.*;
  *   <li>加载当前激活的评分标准。</li>
  *   <li>遍历所有 success 状态的执行记录。</li>
  *   <li>为每条记录调用评分 CLI，解析返回的 JSON 得分。</li>
- *   <li>通过 {@link TaskDomainService#updateRun} 回写评分结果。</li>
+ *   <li>通过 {@link TaskDomainService#} 回写评分结果。</li>
  *   <li>计算任务平均分并更新任务实体。</li>
  * </ol>
  */
@@ -41,6 +48,9 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 public class ScoringClientService {
 
+    private static final int STATUS_CANCELLED = 3;
+    private static final int SCORING_IDLE = 1;
+    private static final int SCORING_SCORED = 3;
     private final EvaluationTaskPORespository taskRepository;
     private final EvaluationCasePORespository caseRepository;
     private final ScoringStandardPORespository standardRepository;
@@ -49,10 +59,6 @@ public class ScoringClientService {
     private final ScoringCliConfig config;
     private final CaseContentService caseContentService;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private static final int STATUS_CANCELLED = 3;
-    private static final int SCORING_IDLE = 1;
-    private static final int SCORING_SCORED = 3;
 
     /**
      * 异步执行评分。
@@ -115,7 +121,7 @@ public class ScoringClientService {
                 }
             }
 
-            taskDomainService.updateRun(taskId, run.getCaseId(), run);
+            //taskDomainService.updateRun(taskId, run.getCaseId(), run);
 
             if (run.getScore() != null && run.getScore().getDims() != null
                     && !run.getScore().getDims().isEmpty()) {
@@ -140,7 +146,7 @@ public class ScoringClientService {
      * 对单条执行记录评分。
      */
     private RunScore scoreSingleRun(CaseRun run, EvaluationCasePO caseItem,
-                                     ScoringStandardPO standard, List<ScoringDimension> dimensions)
+                                    ScoringStandardPO standard, List<ScoringDimension> dimensions)
             throws Exception {
         String prompt = buildScoringPrompt(run, caseItem, standard, dimensions);
         Path workDir = Files.createTempDirectory(Paths.get(config.getWorkDirPrefix()), "score-");
@@ -151,14 +157,15 @@ public class ScoringClientService {
         if (exitCode != 0) throw new RuntimeException("Scoring CLI exited with code " + exitCode);
         String jsonStr = extractJsonFromOutput(outputLines);
         Map<String, Object> scoreData = objectMapper.readValue(jsonStr,
-                new TypeReference<Map<String, Object>>() {});
+                new TypeReference<Map<String, Object>>() {
+                });
         return parseScoreResult(scoreData, dimensions, standard.getVersion());
     }
 
     // ==================== Prompt & Command ====================
 
     String buildScoringPrompt(CaseRun run, EvaluationCasePO caseItem,
-                               ScoringStandardPO standard, List<ScoringDimension> dimensions) {
+                              ScoringStandardPO standard, List<ScoringDimension> dimensions) {
         StringBuilder sb = new StringBuilder();
         sb.append("## 评分任务\n\n### 评分维度与权重\n");
         for (ScoringDimension dim : dimensions) {
@@ -184,7 +191,7 @@ public class ScoringClientService {
     }
 
     String buildCommand(EvaluationCasePO caseItem, ScoringStandardPO standard,
-                         Path workDir, String prompt) {
+                        Path workDir, String prompt) {
         return config.getCommandTemplate()
                 .replace("{prompt}", escapeShell(prompt))
                 .replace("{caseName}", caseItem.getCaseName() != null ? caseItem.getCaseName() : "")
@@ -214,7 +221,8 @@ public class ScoringClientService {
                 try {
                     String l;
                     while ((l = reader.readLine()) != null) lines.add(l);
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
             });
             try {
                 f.get(config.getTimeoutSeconds(), TimeUnit.SECONDS);
@@ -242,7 +250,7 @@ public class ScoringClientService {
 
     @SuppressWarnings("unchecked")
     RunScore parseScoreResult(Map<String, Object> response, List<ScoringDimension> dimensions,
-                               String standardVersion) {
+                              String standardVersion) {
         Map<String, Object> dimsMap = (Map<String, Object>) response.get("dimensions");
         Map<String, Object> commentsMap = (Map<String, Object>) response.get("comments");
         String analysis = (String) response.get("analysis");
@@ -280,7 +288,8 @@ public class ScoringClientService {
         if (dimensionsJson == null || dimensionsJson.isEmpty()) return null;
         try {
             return objectMapper.readValue(dimensionsJson,
-                    new TypeReference<List<ScoringDimension>>() {});
+                    new TypeReference<List<ScoringDimension>>() {
+                    });
         } catch (Exception e) {
             log.error("Failed to parse scoring dimensions", e);
             return null;

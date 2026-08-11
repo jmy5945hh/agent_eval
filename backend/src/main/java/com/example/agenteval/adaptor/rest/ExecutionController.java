@@ -4,6 +4,7 @@ import com.example.agenteval.application.dto.request.record.RecordListRequest;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.record.RecordListResponse;
 import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
+import com.example.agenteval.domain.service.ExecutionService;
 import com.example.agenteval.domain.service.ExportService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
@@ -28,7 +29,7 @@ import javax.validation.Valid;
 @ApiSupport(order = 7)
 public class ExecutionController {
 
-    private final com.example.agenteval.domain.service.ExecutionController executionController;
+    private final ExecutionService executionService;
     private final ExportService exportService;
 
     /**
@@ -39,7 +40,7 @@ public class ExecutionController {
     @ApiOperation(value = "查询汇总数据")
     @GetMapping("/summary/data")
     public ResponseEntity<CommonResponse<SummaryDataResponse>> summaryData() {
-        return ResponseEntity.ok(CommonResponse.success(executionController.summaryData()));
+        return ResponseEntity.ok(CommonResponse.success(executionService.summaryData()));
     }
 
 
@@ -52,7 +53,7 @@ public class ExecutionController {
     @ApiOperation(value = "查询评测列表")
     @PostMapping("/list")
     public ResponseEntity<CommonResponse<Page<RecordListResponse>>> recordList(@Valid @RequestBody RecordListRequest request) {
-        return ResponseEntity.ok(CommonResponse.success(executionController.recordList(request)));
+        return ResponseEntity.ok(CommonResponse.success(executionService.recordList(request)));
     }
 
     /**
@@ -63,7 +64,7 @@ public class ExecutionController {
     @ApiOperation(value = "导出评测记录")
     @PostMapping("/export")
     public void exportRecord(HttpServletResponse response, @Valid @RequestBody RecordListRequest request) {
-        executionController.exportRecord(response, request);
+        executionService.exportRecord(response, request);
     }
 
 }

@@ -5,7 +5,7 @@ import com.example.agenteval.application.dto.request.cases.CaseRequest;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.evalcase.CaseListResponse;
 import com.example.agenteval.domain.repository.EvaluationCasePORespository;
-import com.example.agenteval.domain.service.CaseDomainService;
+import com.example.agenteval.domain.service.EvaluationCaseService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,7 +30,7 @@ import javax.validation.Valid;
 @ApiSupport(order = 5)
 public class CaseController {
 
-    private final CaseDomainService caseDomainService;
+    private final EvaluationCaseService evaluationCaseService;
     private final EvaluationCasePORespository caseRepository;
 
 
@@ -42,7 +42,7 @@ public class CaseController {
     @PostMapping(path = "/create/case")
     public ResponseEntity<CommonResponse<Void>> createCase(@Valid @RequestBody CaseRequest request) {
         log.info("Creating case: name={}, category={}", request.getCaseName(), request.getCategory());
-        caseDomainService.createCase(request);
+        evaluationCaseService.createCase(request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -54,7 +54,7 @@ public class CaseController {
     @PostMapping(path = "/update/case/{caseId}")
     public ResponseEntity<CommonResponse<Void>> updateCase(@ApiParam(value = "案例id", required = true) @PathVariable Integer caseId, @Valid @RequestBody CaseRequest request) {
         log.info("Updating case: id={}, name={}, category={}", caseId, request.getCaseName(), request.getCategory());
-        caseDomainService.updateCase(caseId, request);
+        evaluationCaseService.updateCase(caseId, request);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
@@ -65,13 +65,13 @@ public class CaseController {
     @DeleteMapping("/{caseId}")
     public ResponseEntity<CommonResponse<Void>> deleteCase(@ApiParam(value = "案例id", required = true) @PathVariable Integer caseId) {
         log.info("Deleting case: id={}", caseId);
-        caseDomainService.deleteCase(caseId);
+        evaluationCaseService.deleteCase(caseId);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
     @ApiOperation(value = "案例列表")
     @PostMapping(path = "/list")
     public ResponseEntity<CommonResponse<Page<CaseListResponse>>> caseList(@Valid @RequestBody CaseListRequest request) {
-        return ResponseEntity.ok(CommonResponse.success(caseDomainService.caseList(request)));
+        return ResponseEntity.ok(CommonResponse.success(evaluationCaseService.caseList(request)));
     }
 }

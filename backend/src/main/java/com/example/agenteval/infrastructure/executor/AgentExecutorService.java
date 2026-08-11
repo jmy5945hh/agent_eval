@@ -17,12 +17,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Agent 执行引擎 — 负责在独立线程中串行执行测评任务的各案例。
@@ -33,7 +39,7 @@ import java.util.concurrent.*;
  *   <li>按顺序遍历每条执行记录，调用 CLI 执行 Agent。</li>
  *   <li>每条记录最多重试 {@link AgentCliConfig#getMaxRetries()} 次。</li>
  *   <li>实时采集执行轨迹（stdout 解析为 TrajectoryEntry 列表）。</li>
- *   <li>执行完毕后通过 {@link TaskDomainService#updateRun} 回写状态。</li>
+ *   <li>执行完毕后通过 {@link TaskDomainService#} 回写状态。</li>
  * </ol>
  */
 @Slf4j
@@ -41,27 +47,24 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 public class AgentExecutorService {
 
-    private final EvaluationTaskPORespository taskRepository;
-    private final EvaluationCasePORespository caseRepository;
-    private final TaskCaseRunPORespository caseRunRepository;
-    private final TaskDomainService taskDomainService;
-    private final AgentCliConfig config;
-    private final CaseContentService caseContentService;
-
-    private final Map<String, Process> runningProcesses = new ConcurrentHashMap<>();
-    private final Map<Long, Boolean> cancelledTasks = new ConcurrentHashMap<>();
-
     // 执行记录状态常量（与 TaskDomainService 保持一致）
     private static final int RUN_QUEUED = 1;
     private static final int RUN_RUNNING = 2;
     private static final int RUN_SUCCESS = 3;
     private static final int RUN_FAILED = 4;
     private static final int RUN_CANCELLED = 5;
-
     // 任务状态常量
     private static final int STATUS_RUNNING = 1;
     private static final int STATUS_COMPLETED = 2;
     private static final int STATUS_CANCELLED = 3;
+    private final EvaluationTaskPORespository taskRepository;
+    private final EvaluationCasePORespository caseRepository;
+    private final TaskCaseRunPORespository caseRunRepository;
+    private final TaskDomainService taskDomainService;
+    private final AgentCliConfig config;
+    private final CaseContentService caseContentService;
+    private final Map<String, Process> runningProcesses = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> cancelledTasks = new ConcurrentHashMap<>();
 
     /**
      * 异步执行测评任务。
@@ -117,7 +120,7 @@ public class AgentExecutorService {
                     .status("running")
                     .attempts(attempt + 1)
                     .build();
-            taskDomainService.updateRun(taskId, caseIdStr, running);
+            //taskDomainService.updateRun(taskId, caseIdStr, running);
 
             long startTime = System.currentTimeMillis();
             try {
@@ -139,7 +142,7 @@ public class AgentExecutorService {
                     result.setError(new ErrorInfo("Agent执行失败", "exit code " + exitCode));
                 }
 
-                taskDomainService.updateRun(taskId, caseIdStr, result);
+                //taskDomainService.updateRun(taskId, caseIdStr, result);
                 return;
             } catch (Exception e) {
                 log.error("Case {} attempt {} error: {}", runEntity.getCaseId(), attempt + 1, e.getMessage());
@@ -149,7 +152,7 @@ public class AgentExecutorService {
                             .status("failed")
                             .error(new ErrorInfo("执行异常", e.getMessage()))
                             .build();
-                    taskDomainService.updateRun(taskId, caseIdStr, failed);
+                    //taskDomainService.updateRun(taskId, caseIdStr, failed);
                 }
             }
         }
