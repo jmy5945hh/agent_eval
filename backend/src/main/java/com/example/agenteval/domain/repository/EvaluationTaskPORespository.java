@@ -64,4 +64,5 @@ public interface EvaluationTaskPORespository extends BaseRepository<EvaluationTa
             "WHERE t.status = :status AND t.scoreTime >= :startTime")
     Double findAvgScoreOfCompletedTasksInLast30Days(@Param("status") int status,
                                                     @Param("startTime") LocalDateTime startTime);
+
 }

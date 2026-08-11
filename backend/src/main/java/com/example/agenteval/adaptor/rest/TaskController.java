@@ -27,7 +27,6 @@ import java.util.List;
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
 @Api(tags = "评测任务控制器")
-@ApiIgnore
 @ApiSupport(order = 6)
 public class TaskController {
 
@@ -64,9 +63,17 @@ public class TaskController {
     }
 
     @ApiOperation("创建任务")
-    @PostMapping("/create")
+    @PostMapping("/agent/create")
     public ResponseEntity<CommonResponse<Void>> createTask(@Valid @RequestBody CreateTaskRequest request) {
         taskDomainService.createTask(request);
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @ApiIgnore
+    @ApiOperation("stop事件hook接口")
+    @PostMapping("/agent/hook/stop")
+    public ResponseEntity<CommonResponse<Void>> stopHook(@Valid @RequestBody StopHookRequest stopHookRequest) {
+        taskDomainService.stopHook(stopHookRequest);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 }

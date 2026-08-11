@@ -49,4 +49,11 @@ public interface TaskDomainService {
      * @param request
      */
     void createTask(@Valid CreateTaskRequest request);
+
+    /**
+     * stop的hook
+     *
+     * @param stopHookRequest
+     */
+    void stopHook(@Valid StopHookRequest stopHookRequest);
 }

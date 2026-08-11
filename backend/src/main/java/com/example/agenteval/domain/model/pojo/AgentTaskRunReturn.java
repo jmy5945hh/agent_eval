@@ -11,9 +11,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AgentTaskRunReturn {
 
-
     private String sessionId;
 
     private String repoName;
+
+    private Integer taskCaseRunId;
 
 }

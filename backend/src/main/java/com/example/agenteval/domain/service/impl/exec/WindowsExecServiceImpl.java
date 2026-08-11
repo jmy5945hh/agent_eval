@@ -15,7 +15,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 @Service("win")
 @Slf4j
@@ -23,10 +22,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WindowsExecServiceImpl extends ExecBaseAbstractService implements ExecService {
 
-
     @Override
-    public String agentInvoke(String workDir, String command, String prompt) {
-        String sessionId = UUID.randomUUID().toString();
+    public String agentInvoke(String workDir, String command, String prompt, String sessionId) {
+
         String runPrompt = MessageFormat.format(command, sessionId);
         String[] args = runPrompt.trim().split(" ");
         try {

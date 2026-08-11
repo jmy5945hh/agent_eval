@@ -21,7 +21,7 @@ public class EvaluationTaskPO extends BaseEntity {
     /**
      * 任务名称,;
      */
-    @Column(nullable = true, length = 50, name = "task_name")
+    @Column(nullable = true, length = 100, name = "task_name")
     private String taskName;
     /**
      * 参测 Agent 业务 ID,;

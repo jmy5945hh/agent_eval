@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.example.agenteval.domain.service.impl.MinioService;
 import com.example.agenteval.infrastructure.constant.ModelConfigConstant;
 import com.example.agenteval.infrastructure.util.AgentJsonUtil;
+import com.example.agenteval.infrastructure.util.JsonlUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
@@ -15,7 +16,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -68,9 +72,9 @@ public abstract class AgentTaskBaseAbstractService {
      *
      * @param repositoryName
      */
-    protected String cloneAndCheckout(String repositoryName, String branch) {
+    protected String cloneAndCheckout(String repositoryName, String branch, String sessionId) {
         String directory = repositoryName.replace("https://", "").replace("http://", "").replace(".git", "").split(StrPool.SLASH)[2];
-        String pathName = taskRunFolder + File.separator + directory;
+        String pathName = taskRunFolder + File.separator + sessionId + File.separator + directory;
         try (Git git = Git.cloneRepository().setURI(repositoryName).setDirectory(new File(pathName)).call()) {
             log.info("克隆仓库完成:{}", repositoryName);
             git.checkout()
@@ -85,6 +89,38 @@ public abstract class AgentTaskBaseAbstractService {
         return pathName;
     }
 
+    protected boolean uploadAgentFileToOOS(File file) {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            if (0 == file.length()) {
+                return false;
+            } else {
+                minioService.uploadFile(file.getName(), inputStream);
+                return true;
+            }
+        } catch (Exception e) {
+            log.error("上传文件{}到对象存储失败,原因:{}", file.getName(), e.getMessage(), e);
+            throw new RuntimeException("上传文件失败:" + file.getName());
+        }
+    }
+
+    /**
+     * 读取并上传jsonL文件
+     *
+     * @param file
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    protected <T> List<T> readAndUploadAgentFileToOOS(File file, Class<T> clazz) {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            minioService.uploadFile(file.getName(), inputStream);
+        } catch (Exception e) {
+            log.error("上传文件{}到对象存储失败,原因:{}", file.getName(), e.getMessage(), e);
+            throw new RuntimeException("上传文件失败:" + file.getName());
+        }
+
+        return JsonlUtil.readJsonlFile(file, clazz);
+    }
 
     /**
      * 合并2个配置文件

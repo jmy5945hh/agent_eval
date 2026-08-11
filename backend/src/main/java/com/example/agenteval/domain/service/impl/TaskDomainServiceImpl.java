@@ -108,15 +108,25 @@ public class TaskDomainServiceImpl implements TaskDomainService {
         List<TaskCaseRunPO> taskCaseRunPOS = new ArrayList<>(taskBaseInfo.getEvaluationCasePOS().size());
         for (int i = 0; i < taskBaseInfo.getEvaluationCasePOS().size(); i++) {
             TaskCaseRunPO taskCaseRunPO = TaskCaseRunPO.builder().taskId(evaluationTaskPO.getId()).caseId(taskBaseInfo.getEvaluationCasePOS().get(i).getId())
-                    .status(CaseRunStatusEnum.RUNNING.getStatus()).attempts(0).rounds(0).tokensIn(0).tokensOut(0)
-                    .durationMs(0).errorInfoKey("").trajectoryKey("").build();
+                    .attempts(0).rounds(0).tokensIn(0).tokensOut(0).durationMs(0).errorInfoKey("").trajectoryKey("").build();
             if (i == 0) {
                 taskCaseRunPO.setSessionId(agentTask.getSessionId());
                 taskCaseRunPO.setRepoPath(agentTask.getRepoName());
+                taskCaseRunPO.setStatus(CaseRunStatusEnum.RUNNING.getStatus());
+            } else {
+                taskCaseRunPO.setStatus(CaseRunStatusEnum.QUEUED.getStatus());
             }
             taskCaseRunPOS.add(taskCaseRunPO);
         }
         taskCaseRunPORespository.saveAll(taskCaseRunPOS);
+    }
+
+    @Override
+    public void stopHook(StopHookRequest stopHookRequest) {
+        Integer taskId = agentTaskService.caseFinish(stopHookRequest.getSessionId(), stopHookRequest.getCwd());
+        AgentTaskRunReturn agentTaskRunReturn = agentTaskService.runNextCase(taskId);
+        TaskCaseRunPO taskCaseRunPO = TaskCaseRunPO.builder().id(agentTaskRunReturn.getTaskCaseRunId()).status(CaseRunStatusEnum.RUNNING.getStatus()).build();
+        taskCaseRunPORespository.save(taskCaseRunPO);
     }
 
     private TaskBaseInfo checkTaskRequestAndGet(Integer agentId, Integer agentVersionId, Integer modelId, List<Integer> caseIds, Integer scoringStandardId) {
@@ -140,7 +150,6 @@ public class TaskDomainServiceImpl implements TaskDomainService {
         }
         //scoring standard
         ScoringStandardPO scoringStandardPO = scoringStandardPORespository.findById(scoringStandardId).orElseThrow(() -> new IllegalArgumentException("评测标准不存在: " + scoringStandardId));
-
         return TaskBaseInfo.builder().agentInfoPO(agentInfoPO).agentVersionPO(agentVersionPO).modelConfigPO(modelConfigPO)
                 .evaluationCasePOS(casePOList).scoringStandardPO(scoringStandardPO).build();
     }

@@ -7,4 +7,8 @@ public interface AgentTaskService {
 
     AgentTaskRunReturn createAgentTask(TaskBaseInfo taskBaseInfo);
 
+    Integer caseFinish(String sessionId, String cwd);
+
+    AgentTaskRunReturn runNextCase(Integer taskId);
+
 }

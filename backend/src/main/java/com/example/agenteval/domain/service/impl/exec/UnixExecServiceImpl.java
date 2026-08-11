@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class UnixExecServiceImpl extends ExecBaseAbstractService implements ExecService {
 
     @Override
-    public String agentInvoke(String workDir, String command, String prompt) {
+    public String agentInvoke(String workDir, String command, String prompt, String sessionId) {
         return "";
     }
 }
