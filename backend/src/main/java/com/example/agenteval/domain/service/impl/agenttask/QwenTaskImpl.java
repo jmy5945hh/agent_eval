@@ -63,8 +63,8 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         String sessionId = UUID.randomUUID().toString();
         FileUtil.mkdir(evaluationCasePO.getRepo() + File.separator + sessionId);
         //拉取代码,切换分支
-        /*String runPathName = cloneAndCheckout(evaluationCasePO.getRepo(), evaluationCasePO.getBranch(), sessionId);*/
-        String runPathName = "D:\\temp\\ant-design-pro-for-edd";
+        String runPathName = cloneAndCheckout(evaluationCasePO.getRepo(), evaluationCasePO.getBranch(), sessionId);
+        /*String runPathName = "D:\\temp\\ant-design-pro-for-edd";*/
         //异步调用
         execService.agentInvoke(runPathName, taskBaseInfo.getAgentInfoPO().getStartCmd(), prompt, sessionId);
         //返回
@@ -114,8 +114,8 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         String sessionId = UUID.randomUUID().toString();
         FileUtil.mkdir(evaluationCasePO.getRepo() + File.separator + sessionId);
         //拉取代码,切换分支
-        /*String runPathName = cloneAndCheckout(evaluationCasePO.getRepo(), evaluationCasePO.getBranch(), sessionId);*/
-        String runPathName = "D:\\temp\\ant-design-pro-for-edd";
+        String runPathName = cloneAndCheckout(evaluationCasePO.getRepo(), evaluationCasePO.getBranch(), sessionId);
+        /*String runPathName = "D:\\temp\\ant-design-pro-for-edd";*/
         //异步调用
         execService.agentInvoke(runPathName, agentInfoPO.getStartCmd(), prompt, sessionId);
         //返回
