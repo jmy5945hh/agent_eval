@@ -40,10 +40,10 @@ spring:
       ddl-auto: none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.MySQL8Dialect
 
   # ============ Jackson 配置 ============
@@ -122,3 +122,5 @@ springdoc:
     path: /api-docs
 
 task-run-folder: d:/temp
+
+eval-case-prompt: "你是一位专业的代码质量评测专家。现在，你需要对 AI 助手完成的任务进行客观、全面的评分。\n\n### 1. 任务描述\n<TaskDescription>\n\n### 2. 正确参考文件（作为基准）\n<CorrectReferenceDocument>\n\n### 3. AI 生成的文件（待评测）\n请执行以下操作：\n- 通过 git diff 以识别变更\n- 将读取到的每个文件内容与第 2 步中读取的基准文件进行逐项比较。\n\n### 4. 评分标准\n请按如下 JSON 数组格式定义评分维度（权重总和应为 100，可调整）：\n<ScoringCriteria>\n\n### 评测要求\n- 逐一比较 AI 生成的文件与正确参考文件，从每个维度进行打分（百分制，如 85 分）。\n- 针对每个维度，给出简洁的评语（说明得失分理由）。\n- 最终输出必须是一个严格的 JSON 数组，数组中的每个对象包含 `key`、`label`、`weight`、`score` 字段，其中 `score` 字段填写“得分”（例如：90）。\n- comment字段是对整体结果的一个评语，比如：代码逻辑完全正确，但缺少边界处理\n\n### 输出格式（仅输出此 JSON 数组，不要包含其他任何内容）\n<OutputFormat>"

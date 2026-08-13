@@ -49,6 +49,22 @@ public class MinioService implements OSService {
     @Override
     public String createAndUploadFile(String context) {
         String fileName = IdUtil.simpleUUID();
+        uploadFile(fileName, context);
+        return fileName;
+    }
+
+    /**
+     * 将文字作为文件上场到对象存储
+     *
+     * @param context
+     * @return
+     */
+    @Override
+    public void createAndUploadFile(String fileName, String context) {
+        uploadFile(fileName, context);
+    }
+
+    private void uploadFile(String fileName, String context) {
         try (InputStream inputStream = new ByteArrayInputStream(context.getBytes())) {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -61,7 +77,6 @@ public class MinioService implements OSService {
             log.error("创建文件并上传Minio失败，异常为:[{}]", e.getMessage(), e);
             throw new RuntimeException(e);
         }
-        return fileName;
     }
 
     /**

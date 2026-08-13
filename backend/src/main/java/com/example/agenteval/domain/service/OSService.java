@@ -12,6 +12,8 @@ public interface OSService {
      */
     String createAndUploadFile(String context);
 
+    void createAndUploadFile(String fileName, String context);
+
     /**
      * 上传文件
      *

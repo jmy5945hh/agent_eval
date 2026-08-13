@@ -2,6 +2,7 @@ package com.example.agenteval.infrastructure.util;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 /**
  * jsonL工具类
  */
+@Slf4j
 public class JsonlUtil {
     /**
      * 读取jsonL文件内容工具

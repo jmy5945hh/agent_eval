@@ -71,4 +71,10 @@ public class TaskCaseRunPO extends BaseEntity {
 
     @Column(nullable = true, length = 200, name = "repo_path")
     private String repoPath;
+
+    /**
+     * 1-queued 2-running 3-success 4-failed 5-cancelled,;
+     */
+    @Column(nullable = true, name = "eval_status")
+    private Integer evalStatus;
 }

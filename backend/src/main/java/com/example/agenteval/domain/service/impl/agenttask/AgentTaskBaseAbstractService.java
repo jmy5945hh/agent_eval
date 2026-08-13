@@ -39,7 +39,9 @@ public abstract class AgentTaskBaseAbstractService {
     protected String readSettings(String fileName) {
         //String filePath = resolveConfigPath(fileName);
         try {
-            return FileUtil.readString(fileName, StandardCharsets.UTF_8);
+            String content = FileUtil.readString(fileName, StandardCharsets.UTF_8);
+            log.info("读取agent本地配置成功, 文件:{}", fileName);
+            return content;
         } catch (Exception e) {
             log.error("读取文件{}失败，失败原因{}", fileName, e.getMessage(), e);
             return "{}";
@@ -54,6 +56,7 @@ public abstract class AgentTaskBaseAbstractService {
      */
     protected void writeConfigFile(String filePath, String newConfig) {
         FileUtil.writeUtf8String(newConfig, filePath);
+        log.info("配置写入本地文件完成, 文件:{}", filePath);
     }
 
     /**
@@ -64,7 +67,10 @@ public abstract class AgentTaskBaseAbstractService {
      */
     protected String getPrompt(String promptKey) {
         //prompt读取
-        return minioService.getAndReadFile(promptKey);
+        log.info("开始读取prompt, promptKey:{}", promptKey);
+        String prompt = minioService.getAndReadFile(promptKey);
+        log.info("prompt读取完成, promptKey:{}, 长度:{}", promptKey, prompt.length());
+        return prompt;
     }
 
     /**
@@ -75,6 +81,7 @@ public abstract class AgentTaskBaseAbstractService {
     protected String cloneAndCheckout(String repositoryName, String branch, String sessionId) {
         String directory = repositoryName.replace("https://", "").replace("http://", "").replace(".git", "").split(StrPool.SLASH)[2];
         String pathName = taskRunFolder + File.separator + sessionId + File.separator + directory;
+        log.info("开始克隆仓库, repositoryName:{}, branch:{}, sessionId:{}, 目标目录:{}", repositoryName, branch, sessionId, pathName);
         try (Git git = Git.cloneRepository().setURI(repositoryName).setDirectory(new File(pathName)).call()) {
             log.info("克隆仓库完成:{}", repositoryName);
             git.checkout()
@@ -82,6 +89,7 @@ public abstract class AgentTaskBaseAbstractService {
                     .setStartPoint("origin/" + branch)
                     .setCreateBranch(true) //
                     .call();
+            log.info("切换分支完成:{}", branch);
         } catch (GitAPIException e) {
             log.error("克隆仓库{}出现异常{}", repositoryName, e.getMessage(), e);
             throw new RuntimeException(e);
@@ -92,10 +100,29 @@ public abstract class AgentTaskBaseAbstractService {
     protected boolean uploadAgentFileToOOS(File file) {
         try (InputStream inputStream = new FileInputStream(file)) {
             if (0 == file.length()) {
+                log.warn("待上传文件为空, 跳过上传, 文件:{}", file.getName());
                 return false;
             } else {
                 minioService.uploadFile(file.getName(), inputStream);
+                log.info("文件上传到对象存储成功, 文件:{}", file.getName());
                 return true;
+            }
+        } catch (Exception e) {
+            log.error("上传文件{}到对象存储失败,原因:{}", file.getName(), e.getMessage(), e);
+            throw new RuntimeException("上传文件失败:" + file.getName());
+        }
+    }
+
+    protected String uploadAndReadAgentFileToOOS(File file) {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            if (0 == file.length()) {
+                log.warn("待上传文件为空, 返回空内容, 文件:{}", file.getName());
+                return "";
+            } else {
+                minioService.uploadFile(file.getName(), inputStream);
+                String content = FileUtil.readString(file, StandardCharsets.UTF_8);
+                log.info("文件上传并读取成功, 文件:{}, 长度:{}", file.getName(), content.length());
+                return content;
             }
         } catch (Exception e) {
             log.error("上传文件{}到对象存储失败,原因:{}", file.getName(), e.getMessage(), e);
@@ -111,7 +138,8 @@ public abstract class AgentTaskBaseAbstractService {
      * @param <T>
      * @return
      */
-    protected <T> List<T> readAndUploadAgentFileToOOS(File file, Class<T> clazz) {
+    protected <T> List<T> readAndUploadAgentJsonLFileToOOS(File file, Class<T> clazz) {
+        log.info("开始读取并上传jsonL文件, 文件:{}", file.getName());
         try (InputStream inputStream = new FileInputStream(file)) {
             minioService.uploadFile(file.getName(), inputStream);
         } catch (Exception e) {
@@ -119,7 +147,9 @@ public abstract class AgentTaskBaseAbstractService {
             throw new RuntimeException("上传文件失败:" + file.getName());
         }
 
-        return JsonlUtil.readJsonlFile(file, clazz);
+        List<T> result = JsonlUtil.readJsonlFile(file, clazz);
+        log.info("jsonL文件读取并上传完成, 文件:{}, 记录条数:{}", file.getName(), result.size());
+        return result;
     }
 
     /**
@@ -131,12 +161,14 @@ public abstract class AgentTaskBaseAbstractService {
      */
     protected String mergeConfig(String sourceContent, String configKey, String apiKey, String modelName, String
             url) {
+        log.info("开始合并配置文件, configKey:{}, modelName:{}", configKey, modelName);
         String oosContent = minioService.getAndReadFile(configKey);
         oosContent = oosContent.replaceAll(ModelConfigConstant.API_KEY, apiKey).replaceAll(ModelConfigConstant.MODEL_NAME, modelName)
                 .replaceAll(ModelConfigConstant.URL, url);
         JSONObject sourceJsonObject = JSONUtil.parseObj(sourceContent);
         JSONObject oosJsonObject = JSONUtil.parseObj(oosContent);
         JSONObject mergeResult = AgentJsonUtil.merge(sourceJsonObject, oosJsonObject);
+        log.info("配置文件合并完成, configKey:{}", configKey);
         return JSONUtil.toJsonStr(mergeResult);
     }
 

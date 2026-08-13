@@ -17,7 +17,7 @@ public class QwenJsonL {
     @JsonProperty("uuid")
     private String uuid;
     @JsonProperty("parentUuid")
-    private Object parentUuid;
+    private String parentUuid;
     @JsonProperty("sessionId")
     private String sessionId;
     @JsonProperty("timestamp")
@@ -30,20 +30,20 @@ public class QwenJsonL {
     private String cwd;
     @JsonProperty("version")
     private String version;
-    @JsonProperty("message")
-    private MessageDTO message;
+    /*@JsonProperty("message")
+    private MessageDTO message;*/
     @JsonProperty("subtype")
     private String subtype;
-    @JsonProperty("systemPayload")
-    private SystemPayloadDTO systemPayload;
+    /*@JsonProperty("systemPayload")
+    private SystemPayloadDTO systemPayload;*/
     @JsonProperty("model")
     private String model;
     @JsonProperty("usageMetadata")
     private UsageMetadataDTO usageMetadata;
     @JsonProperty("contextWindowSize")
     private Integer contextWindowSize;
-    @JsonProperty("toolCallResult")
-    private ToolCallResultDTO toolCallResult;
+    /*@JsonProperty("toolCallResult")
+    private ToolCallResultDTO toolCallResult;*/
 
     @NoArgsConstructor
     @Data
