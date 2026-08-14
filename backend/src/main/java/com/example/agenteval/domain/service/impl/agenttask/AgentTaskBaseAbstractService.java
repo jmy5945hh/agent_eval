@@ -153,6 +153,26 @@ public abstract class AgentTaskBaseAbstractService {
     }
 
     /**
+     * 读取并上传jsonL文件
+     *
+     * @param file
+     * @return
+     */
+    protected String readAndUploadAgentJsonLFileToOOS(File file) {
+        log.info("开始读取并上传jsonL文件, 文件:{}", file.getName());
+        try (InputStream inputStream = new FileInputStream(file)) {
+            minioService.uploadFile(file.getName(), inputStream);
+        } catch (Exception e) {
+            log.error("上传文件{}到对象存储失败,原因:{}", file.getName(), e.getMessage(), e);
+            throw new RuntimeException("上传文件失败:" + file.getName());
+        }
+
+        String result = FileUtil.readString(file, StandardCharsets.UTF_8);
+        log.info("jsonL文件读取并上传完成, 文件:{}", file.getName());
+        return result;
+    }
+
+    /**
      * 合并2个配置文件
      *
      * @param sourceContent
@@ -196,8 +216,3 @@ public abstract class AgentTaskBaseAbstractService {
     }
 }
 
-
-//判断配置文件是否存在
-//合并配置
-//写入配置
-//运行任务

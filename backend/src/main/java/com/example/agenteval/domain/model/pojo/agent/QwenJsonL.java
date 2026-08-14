@@ -1,5 +1,6 @@
 package com.example.agenteval.domain.model.pojo.agent;
 
+import cn.hutool.core.annotation.Alias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,8 +35,8 @@ public class QwenJsonL {
     private MessageDTO message;*/
     @JsonProperty("subtype")
     private String subtype;
-    /*@JsonProperty("systemPayload")
-    private SystemPayloadDTO systemPayload;*/
+    @JsonProperty("systemPayload")
+    private SystemPayloadDTO systemPayload;
     @JsonProperty("model")
     private String model;
     @JsonProperty("usageMetadata")
@@ -64,7 +65,18 @@ public class QwenJsonL {
     @NoArgsConstructor
     @Data
     public static class SystemPayloadDTO {
-        @JsonProperty("snapshot")
+
+        @JsonProperty("uiEvent")
+        private UiEventDtO uiEvent;
+
+        @NoArgsConstructor
+        @Data
+        public static class UiEventDtO {
+            @JsonProperty("event.name")
+            @Alias("event.name")
+            private String eventName;
+        }
+        /*@JsonProperty("snapshot")
         private SnapshotDTO snapshot;
 
         @NoArgsConstructor
@@ -87,7 +99,7 @@ public class QwenJsonL {
             @Data
             public static class FileStatesDTO {
             }
-        }
+        }*/
     }
 
     @NoArgsConstructor

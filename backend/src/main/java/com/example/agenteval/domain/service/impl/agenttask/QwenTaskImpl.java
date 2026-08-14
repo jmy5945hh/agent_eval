@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentTaskService {
 
+    private static final String SUCCESS_TARGET = "\"event.name\":\"qwen-code.api_response\"";
+    private static final String FAILURE_TARGET = "\"event.name\":\"qwen-code.api_error\"";
     private final AgentVersionPORespository agentVersionPORespository;
     private final ModelConfigPORespository modelConfigPORespository;
     private final ScoringStandardPORespository scoringStandardPORespository;
@@ -128,6 +130,7 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         taskCaseRunPO.setTokensOut(qwenCaseRun.getTokenOut());
         taskCaseRunPO.setDurationMs(qwenCaseRun.getDurationMs());
         taskCaseRunPO.setTrajectoryKey(sessionJsonL.getName());
+        taskCaseRunPO.setRounds(qwenCaseRun.getTurn());
         taskCaseRunPORespository.save(taskCaseRunPO);
         errorLog.delete();
         sessionJsonL.delete();
@@ -281,6 +284,8 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
                 taskCaseScorePORespository.saveAll(taskCaseScorePOS);
             });
         }
+        int sum = dimensionsResultList.stream().mapToInt(ScoreCommentResult::getScore).sum();
+        taskCaseRunPO.setScore(new BigDecimal(sum));
         taskCaseRunPO.setEvalStatus(CaseRunStatusEnum.SUCCESS.getStatus());
         taskCaseRunPORespository.save(taskCaseRunPO);
         log.info("案例评测结果入库完成, runSessionId:{}, 评分维度数量:{}", agentFinish.getSessionId(), CollUtil.size(dimensionsResultList));
@@ -293,21 +298,14 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
             evaluationTaskPO.setScoringStatus(ScoringStatusEnum.SCORED.getStatus());
             //求平均分
             List<TaskCaseRunPO> byTaskId = taskCaseRunPORespository.findByTaskIdAndStatusNot(evaluationTaskPO.getId(), CaseRunStatusEnum.CANCELLED.getStatus());
-            List<Integer> runIds = byTaskId.stream().map(TaskCaseRunPO::getId).collect(Collectors.toList());
-            List<TaskCaseScorePO> taskCaseScorePOS = taskCaseScorePORespository.findByRunIdIn(runIds);
-            int score = taskCaseScorePOS.stream().mapToInt(TaskCaseScorePO::getScore).sum();
-
-            ScoringStandardPO scoringStandardPO = scoringStandardPORespository.findById(evaluationTaskPO.getScoreStandardId()).get();
-            List<ScoringDimension> scoringDimensions = JSONUtil.toBean(scoringStandardPO.getDimensions(), new TypeReference<>() {
-            }, true);
             BigDecimal averageScore;
-            int count = byTaskId.size() * scoringDimensions.size();
-            if (count == 0) {
+            if (byTaskId.isEmpty()) {
                 // 可根据业务逻辑设定默认值，例如 0 或 null
                 averageScore = BigDecimal.ZERO;
             } else {
-                averageScore = BigDecimal.valueOf(score)
-                        .divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+                int totalScore = byTaskId.stream().mapToInt(item -> item.getScore().intValue()).sum();
+                averageScore = BigDecimal.valueOf(totalScore)
+                        .divide(BigDecimal.valueOf(byTaskId.size()), 2, RoundingMode.HALF_UP);
             }
             evaluationTaskPO.setAvgScore(averageScore);
             evaluationTaskPORespository.save(evaluationTaskPO);
@@ -331,7 +329,28 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         Date startDate = DateUtil.parse(startTime, DatePattern.UTC_MS_FORMAT);
         Date endDate = DateUtil.parse(endTime, DatePattern.UTC_MS_FORMAT);
         long durationMs = DateUtil.betweenMs(startDate, endDate);
+        String jsonStr = JSONUtil.toJsonStr(qwenJsonL);
+        Integer successTurn = getTurn(SUCCESS_TARGET, jsonStr);
+        Integer failTurn = getTurn(FAILURE_TARGET, jsonStr);
+
         log.info("案例执行统计完成, tokenIn:{}, tokenOut:{}, durationMs:{}", tokenIn, tokenOut, durationMs);
-        return QwenCaseRun.builder().tokenIn(tokenIn).tokenOut(tokenOut).durationMs(durationMs).build();
+        return QwenCaseRun.builder().tokenIn(tokenIn).tokenOut(tokenOut).durationMs(durationMs).turn(successTurn + failTurn).build();
+    }
+
+    private Integer getTurn(String target, String jsonLContent) {
+
+        int count = 0;
+        int fromIndex = 0;
+
+        while (true) {
+            int index = jsonLContent.indexOf(target, fromIndex);
+            if (index == -1) {
+                break;
+            }
+            count++;
+            fromIndex = index + target.length(); // 跳过本次匹配，继续向后查找
+        }
+
+        return count;
     }
 }

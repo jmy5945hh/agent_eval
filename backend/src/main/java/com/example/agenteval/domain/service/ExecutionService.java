@@ -1,11 +1,13 @@
 package com.example.agenteval.domain.service;
 
 import com.example.agenteval.application.dto.request.record.RecordListRequest;
-import com.example.agenteval.application.dto.response.record.RecordListResponse;
-import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
+import com.example.agenteval.application.dto.request.record.TaskCaseListRequest;
+import com.example.agenteval.application.dto.response.record.*;
+import com.example.agenteval.domain.model.pojo.ScoreCommentResult;
 import org.springframework.data.domain.Page;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 测评记录查询服务接口 — 负责历史记录的分页、筛选、详情聚合查询。
@@ -42,4 +44,60 @@ public interface ExecutionService {
      * @param request
      */
     void exportRecord(HttpServletResponse response, RecordListRequest request);
+
+    /**
+     * 查询评测详情
+     *
+     * @param taskId
+     * @return
+     */
+    TaskDetailResponse taskDetail(Integer taskId);
+
+    /**
+     * 查询评测任务案例列表
+     *
+     * @param taskId
+     * @return
+     */
+    Page<TaskCaseListResponse> taskCaseList(Integer taskId, TaskCaseListRequest taskCaseListRequest);
+
+    /**
+     * 查询评测任务案例详情
+     *
+     * @param runCaseId
+     * @return
+     */
+    TaskCaseInfoResponse taskCaseInfo(Integer runCaseId);
+
+    /**
+     * 查询评测任务案例执行轨迹
+     *
+     * @param runCaseId
+     * @return
+     */
+    String taskCaseExecutionTrace(Integer runCaseId);
+
+    /**
+     * 查询评测任务案例提示信息
+     *
+     * @param runCaseId
+     * @return
+     */
+    String taskCasePrompt(Integer runCaseId);
+
+    /**
+     * 查询评测任务案例错误信息
+     *
+     * @param runCaseId
+     * @return
+     */
+    String taskCaseError(Integer runCaseId);
+
+    /**
+     * 查询评测任务案例评分和评论
+     *
+     * @param runCaseId
+     * @return
+     */
+    List<ScoreCommentResult> taskCaseScoreComment(Integer runCaseId);
 }

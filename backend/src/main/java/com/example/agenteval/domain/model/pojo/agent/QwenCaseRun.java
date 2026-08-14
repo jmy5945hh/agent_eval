@@ -13,6 +13,7 @@ public class QwenCaseRun {
 
     private Integer tokenOut;
     private Integer tokenIn;
+    private Integer turn;
     private long durationMs;
 
 }

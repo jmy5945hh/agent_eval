@@ -15,6 +15,12 @@ import lombok.NoArgsConstructor;
 public class RecordListResponse {
 
     /**
+     * 任务Id
+     */
+    @ApiModelProperty("主键id")
+    private Integer id;
+
+    /**
      * 任务名称
      */
     @ApiModelProperty(value = "任务名称")

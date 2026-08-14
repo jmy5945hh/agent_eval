@@ -32,4 +32,5 @@ public class EvaluationCasePOSpecs {
             return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
+
 }

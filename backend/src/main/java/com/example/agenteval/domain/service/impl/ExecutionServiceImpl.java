@@ -4,21 +4,25 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import com.example.agenteval.application.dto.request.record.RecordListRequest;
-import com.example.agenteval.application.dto.response.record.RecordListResponse;
-import com.example.agenteval.application.dto.response.record.SummaryDataResponse;
+import com.example.agenteval.application.dto.request.record.TaskCaseListRequest;
+import com.example.agenteval.application.dto.response.record.*;
 import com.example.agenteval.domain.model.*;
 import com.example.agenteval.domain.model.excel.RecordListExcel;
 import com.example.agenteval.domain.model.pojo.CaseRun;
 import com.example.agenteval.domain.model.pojo.ErrorInfo;
 import com.example.agenteval.domain.model.pojo.RunScore;
+import com.example.agenteval.domain.model.pojo.ScoreCommentResult;
 import com.example.agenteval.domain.repository.*;
 import com.example.agenteval.domain.service.ExecutionService;
 import com.example.agenteval.domain.service.specification.EvaluationTaskPOSpecs;
+import com.example.agenteval.domain.service.specification.TaskCaseRunPOSpecs;
 import com.example.agenteval.infrastructure.constant.ExcelConstant;
 import com.example.agenteval.infrastructure.enums.CaseRunStatusEnum;
 import com.example.agenteval.infrastructure.enums.ScoringStatusEnum;
 import com.example.agenteval.infrastructure.enums.TaskStatusEnum;
+import com.example.agenteval.infrastructure.util.DateUtil;
 import com.example.agenteval.infrastructure.util.EnumUtil;
 import com.example.agenteval.infrastructure.util.ExcelUtil;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +72,13 @@ public class ExecutionServiceImpl implements ExecutionService {
     private final TaskCaseScorePORespository caseScoreRepository;
     private final AgentInfoPORespository agentInfoPORespository;
     private final ModelConfigPORespository modelConfigPORespository;
+    private final EvaluationTaskPORespository evaluationTaskPORespository;
+    private final AgentVersionPORespository agentVersionPORespository;
+    private final EvaluationCasePORespository evaluationCasePORespository;
+    private final ScoringStandardPORespository scoringStandardPORespository;
+    private final TaskCaseRunPORespository taskCaseRunPORespository;
+    private final MinioService minioService;
+    private final TaskCaseScorePORespository taskCaseScorePORespository;
     @Value("${temp-file_path}")
     private String tempFilePath;
 
@@ -134,6 +145,118 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
     }
 
+    @Override
+    public TaskDetailResponse taskDetail(Integer taskId) {
+        EvaluationTaskPO evaluationTaskPO = evaluationTaskPORespository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("任务不存在: " + taskId));
+        //agent
+        AgentInfoPO agentInfoPO = agentInfoPORespository.findById(evaluationTaskPO.getAgentId()).orElseThrow(() -> new IllegalArgumentException("Agent 不存在: " + evaluationTaskPO.getAgentId()));
+        //agent version
+        AgentVersionPO agentVersionPO = agentVersionPORespository.findById(evaluationTaskPO.getAgentVersionId()).orElseThrow(() -> new IllegalArgumentException("Agent 版本不存在: " + evaluationTaskPO.getAgentVersionId()));
+        //model
+        ModelConfigPO modelConfigPO = modelConfigPORespository.findById(evaluationTaskPO.getModelId()).orElseThrow(() -> new IllegalArgumentException("模型不存在: " + evaluationTaskPO.getModelId()));
+        //scoring standard
+        ScoringStandardPO scoringStandardPO = scoringStandardPORespository.findById(evaluationTaskPO.getScoreStandardId()).orElseThrow(() -> new IllegalArgumentException("评测标准不存在: " + evaluationTaskPO.getScoreStandardId()));
+        //案例
+        List<TaskCaseRunPO> taskCaseRunPOS = taskCaseRunPORespository.findByTaskId(evaluationTaskPO.getId());
+        Map<Integer, List<TaskCaseRunPO>> taskCaseRunMap = taskCaseRunPOS.stream().collect(Collectors.groupingBy(TaskCaseRunPO::getStatus));
+
+        TaskDetailResponse.ExecutionProgress executionProgress = TaskDetailResponse.ExecutionProgress.builder().totalCase(taskCaseRunPOS.size())
+                .successCase(ObjUtil.isNull(taskCaseRunMap.get(CaseRunStatusEnum.SUCCESS.getStatus())) ? 0 : taskCaseRunMap.get(CaseRunStatusEnum.SUCCESS.getStatus()).size())
+                .failCase(ObjUtil.isNull(taskCaseRunMap.get(CaseRunStatusEnum.FAILED.getStatus())) ? 0 : taskCaseRunMap.get(CaseRunStatusEnum.FAILED.getStatus()).size())
+                .failCase(ObjUtil.isNull(taskCaseRunMap.get(CaseRunStatusEnum.QUEUED.getStatus())) ? 0 : taskCaseRunMap.get(CaseRunStatusEnum.QUEUED.getStatus()).size())
+                .build();
+        return TaskDetailResponse.builder().id(evaluationTaskPO.getId()).taskName(evaluationTaskPO.getTaskName()).agentName(agentInfoPO.getAgentName()).agentVersion(agentVersionPO.getVersion())
+                .modelName(modelConfigPO.getModelName()).scoringStandardName(scoringStandardPO.getScoringStandardName()).executionProgress(executionProgress).build();
+    }
+
+    @Override
+    public Page<TaskCaseListResponse> taskCaseList(Integer taskId, TaskCaseListRequest taskCaseListRequest) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(taskCaseListRequest.getPage(), taskCaseListRequest.getSize(), sort);
+        Page<TaskCaseRunPO> taskCaseRunPage = taskCaseRunPORespository.findAll(TaskCaseRunPOSpecs.taskCaseListBuildSpec(taskId, taskCaseListRequest.getState()), pageable);
+        List<TaskCaseRunPO> taskCaseRunPOS = taskCaseRunPage.getContent();
+        Map<Integer, TaskCaseRunPO> taskCaseRunPOMap = taskCaseRunPOS.stream().collect(Collectors.toMap(TaskCaseRunPO::getId, Function.identity()));
+        List<Integer> caseIds = taskCaseRunPOS.stream().map(TaskCaseRunPO::getCaseId).collect(Collectors.toList());
+        //案例
+        List<EvaluationCasePO> casePOList = evaluationCasePORespository.findByIdIn(caseIds);
+        Map<Integer, EvaluationCasePO> evaluationCasePOMap = casePOList.stream().collect(Collectors.toMap(EvaluationCasePO::getId, Function.identity()));
+        //返回体
+        List<TaskCaseListResponse> taskCaseListResponses = new ArrayList<>(taskCaseRunPOS.size());
+
+        taskCaseRunPOS.forEach(item -> {
+            TaskCaseRunPO taskCaseRunPO = taskCaseRunPOMap.get(item.getId());
+            EvaluationCasePO evaluationCasePO = evaluationCasePOMap.get(item.getCaseId());
+            taskCaseListResponses.add(TaskCaseListResponse.builder().id(taskCaseRunPO.getId()).turn(item.getRounds() + "轮").token(item.getTokensOut() + item.getTokensIn())
+                    .timeConsuming(DateUtil.calculateTimeDifference(item.getDurationMs())).score(item.getScore().longValue() + "分")
+                    .state(taskCaseRunPO.getStatus()).caseName(evaluationCasePO.getCaseName()).build());
+        });
+        return new PageImpl<>(taskCaseListResponses, taskCaseRunPage.getPageable(), taskCaseRunPage.getTotalElements());
+    }
+
+    @Override
+    public TaskCaseInfoResponse taskCaseInfo(Integer runCaseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findById(runCaseId).orElseThrow(() -> new IllegalArgumentException("任务案例不存在: " + runCaseId));
+        return TaskCaseInfoResponse.builder().turn(taskCaseRunPO.getRounds() + "轮").state(taskCaseRunPO.getStatus()).inputToken(taskCaseRunPO.getTokensIn())
+                .outputToken(taskCaseRunPO.getTokensOut()).build();
+    }
+
+    @Override
+    public String taskCaseExecutionTrace(Integer runCaseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findById(runCaseId).orElseThrow(() -> new IllegalArgumentException("任务案例不存在: " + runCaseId));
+        if (!CaseRunStatusEnum.SUCCESS.getStatus().equals(taskCaseRunPO.getStatus())) {
+            return "";
+        }
+        try {
+            return minioService.getAndReadFile(taskCaseRunPO.getSessionId() + ".jsonl");
+        } catch (Exception e) {
+            log.error("查询任务案例执行轨迹失败，失败原因:[{}]", e.getMessage(), e);
+            return "";
+        }
+    }
+
+    @Override
+    public String taskCasePrompt(Integer runCaseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findById(runCaseId).orElseThrow(() -> new IllegalArgumentException("任务案例不存在: " + runCaseId));
+        EvaluationCasePO evaluationCasePO = evaluationCasePORespository.findById(taskCaseRunPO.getCaseId()).orElseThrow(() -> new IllegalArgumentException("案例不存在: " + runCaseId));
+        try {
+            return minioService.getAndReadFile(evaluationCasePO.getPromptKey());
+        } catch (Exception e) {
+            log.error("查询任务案例提示词失败，失败原因:[{}]", e.getMessage(), e);
+            return "";
+        }
+    }
+
+    @Override
+    public String taskCaseError(Integer runCaseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findById(runCaseId).orElseThrow(() -> new IllegalArgumentException("任务案例不存在: " + runCaseId));
+        if (!CaseRunStatusEnum.FAILED.getStatus().equals(taskCaseRunPO.getStatus())) {
+            return "";
+        }
+        if (StrUtil.isBlank(taskCaseRunPO.getErrorInfoKey())) {
+            return "";
+        }
+        try {
+            return minioService.getAndReadFile(taskCaseRunPO.getErrorInfoKey());
+        } catch (Exception e) {
+            log.error("查询任务案例执行轨迹失败，失败原因:[{}]", e.getMessage(), e);
+            return "";
+        }
+    }
+
+    @Override
+    public List<ScoreCommentResult> taskCaseScoreComment(Integer runCaseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findById(runCaseId).orElseThrow(() -> new IllegalArgumentException("任务案例不存在: " + runCaseId));
+        if (!CaseRunStatusEnum.SUCCESS.getStatus().equals(taskCaseRunPO.getEvalStatus())) {
+            return new ArrayList<>();
+        }
+        List<TaskCaseScorePO> taskCaseScorePOS = taskCaseScorePORespository.findByRunId(taskCaseRunPO.getId());
+        List<ScoreCommentResult> returnList = new ArrayList<>(taskCaseScorePOS.size());
+        taskCaseScorePOS.forEach(item -> {
+            returnList.add(ScoreCommentResult.builder().label(item.getDimLabel()).key(item.getDimKey()).score(item.getScore()).comment(item.getComment()).build());
+        });
+        return returnList;
+    }
+
 
     private List<RecordListResponse> getRecordListResponse(Object obj) {
         List<EvaluationTaskPO> evaluationTaskList = null;
@@ -161,7 +284,7 @@ public class ExecutionServiceImpl implements ExecutionService {
             AgentInfoPO agentInfoPO = agentInfoMap.get(item.getAgentId());
             ModelConfigPO modelConfigPO = modelMap.get(item.getModelId());
             List<TaskCaseRunPO> taskCaseRunPOS = caseRunGroupMap.get(item.getId());
-            returnList.add(RecordListResponse.builder().taskName(item.getTaskName()).agentName(agentInfoPO.getAgentName()).modelName(modelConfigPO.getModelName())
+            returnList.add(RecordListResponse.builder().id(item.getId()).taskName(item.getTaskName()).agentName(agentInfoPO.getAgentName()).modelName(modelConfigPO.getModelName())
                     .caseCount(taskCaseRunPOS.size()).taskStatus(item.getStatus()).scoreStatus(item.getScoringStatus()).taskCreateUserName(item.getCreateUserName())
                     .taskCreateTaskTime(LocalDateTimeUtil.formatNormal(item.getCreateTime())).build());
         });

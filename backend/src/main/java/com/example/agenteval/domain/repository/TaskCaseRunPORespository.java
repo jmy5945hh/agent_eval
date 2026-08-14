@@ -1,10 +1,11 @@
 package com.example.agenteval.domain.repository;
 
 import com.example.agenteval.domain.model.TaskCaseRunPO;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-public interface TaskCaseRunPORespository extends BaseRepository<TaskCaseRunPO, Integer> {
+public interface TaskCaseRunPORespository extends BaseRepository<TaskCaseRunPO, Integer>, JpaSpecificationExecutor<TaskCaseRunPO> {
 
     /**
      * 根据案例 ID 查询所有关联的测评任务运行记录。

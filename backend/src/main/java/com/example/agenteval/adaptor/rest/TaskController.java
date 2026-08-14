@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -69,7 +68,6 @@ public class TaskController {
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
-    @ApiIgnore
     @ApiOperation("stop事件hook接口")
     @PostMapping("/agent/hook/stop")
     public ResponseEntity<CommonResponse<Void>> stopHook(@Valid @RequestBody StopHookRequest stopHookRequest) {

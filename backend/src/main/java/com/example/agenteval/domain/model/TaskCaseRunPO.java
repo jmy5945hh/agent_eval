@@ -5,6 +5,7 @@ import lombok.*;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -77,4 +78,7 @@ public class TaskCaseRunPO extends BaseEntity {
      */
     @Column(nullable = true, name = "eval_status")
     private Integer evalStatus;
+
+    @Column(name = "score")
+    private BigDecimal score;
 }
