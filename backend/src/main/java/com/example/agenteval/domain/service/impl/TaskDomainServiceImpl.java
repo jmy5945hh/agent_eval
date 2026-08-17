@@ -6,6 +6,8 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.example.agenteval.application.dto.request.cases.CaseListRequest;
+import com.example.agenteval.application.dto.request.task.CreateTaskRequest;
+import com.example.agenteval.application.dto.request.task.StopHookRequest;
 import com.example.agenteval.application.dto.response.evalcase.CaseListResponse;
 import com.example.agenteval.application.dto.response.task.*;
 import com.example.agenteval.domain.model.*;
@@ -52,6 +54,7 @@ public class TaskDomainServiceImpl implements TaskDomainService {
     private final EvaluationTaskPORespository evaluationTaskPORespository;
     private final TaskCaseRunPORespository taskCaseRunPORespository;
     private final TaskCaseEvalLinkPORespository taskCaseEvalLinkPORespository;
+    private final EvaluationCasePORespository evaluationCasePORespository;
 
     @Override
     public List<TaskAgentResponse> taskAgentList() {
@@ -147,7 +150,11 @@ public class TaskDomainServiceImpl implements TaskDomainService {
                         .error(stopHookRequest.getError()).errorDetails(stopHookRequest.getErrorDetails()).lastAssistantMessage(stopHookRequest.getLastAssistantMessage()).build());
                 log.info("案例结果入库完成, taskId:{}", taskId);
                 AgentTaskRunReturn agentTaskRunReturn = agentTaskService.runNextCase(taskId);
-                log.info("下一个案例已启动, taskId:{}, sessionId:{}", taskId, agentTaskRunReturn.getSessionId());
+                if (StrUtil.isBlank(agentTaskRunReturn.getSessionId())) {
+                    log.info("没有下一个案例需要启动, taskId:{}", taskId);
+                } else {
+                    log.info("下一个案例已启动, taskId:{}, sessionId:{}", taskId, agentTaskRunReturn.getSessionId());
+                }
                 return;
             }
             TaskCaseEvalLinkPO byEvalSessionId = taskCaseEvalLinkPORespository.findByEvalSessionId(stopHookRequest.getSessionId());
@@ -162,6 +169,32 @@ public class TaskDomainServiceImpl implements TaskDomainService {
         });
         thread.start();
 
+    }
+
+    @Override
+    public void stopCase(Integer taskId, Integer caseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findByTaskIdAndCaseId(taskId, caseId);
+        if (ObjUtil.isNull(taskCaseRunPO)) {
+            throw new IllegalArgumentException("任务案例不存在");
+        }
+        if (!CaseRunStatusEnum.QUEUED.getStatus().equals(taskCaseRunPO.getStatus())) {
+            throw new IllegalArgumentException("任务案例状态不是队列中");
+        }
+        taskCaseRunPO.setStatus(CaseRunStatusEnum.CANCELLED.getStatus());
+        taskCaseRunPORespository.save(taskCaseRunPO);
+    }
+
+    @Override
+    public void stopEval(Integer taskId, Integer caseId) {
+        TaskCaseRunPO taskCaseRunPO = taskCaseRunPORespository.findByTaskIdAndCaseId(taskId, caseId);
+        if (ObjUtil.isNull(taskCaseRunPO)) {
+            throw new IllegalArgumentException("任务案例不存在");
+        }
+        if (!CaseRunStatusEnum.QUEUED.getStatus().equals(taskCaseRunPO.getEvalStatus())) {
+            throw new IllegalArgumentException("任务案例评测状态不是队列中");
+        }
+        taskCaseRunPO.setEvalStatus(CaseRunStatusEnum.CANCELLED.getStatus());
+        taskCaseRunPORespository.save(taskCaseRunPO);
     }
 
 

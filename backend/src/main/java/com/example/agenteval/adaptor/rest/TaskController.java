@@ -1,6 +1,8 @@
 package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.request.cases.CaseListRequest;
+import com.example.agenteval.application.dto.request.task.CreateTaskRequest;
+import com.example.agenteval.application.dto.request.task.StopHookRequest;
 import com.example.agenteval.application.dto.response.CommonResponse;
 import com.example.agenteval.application.dto.response.task.*;
 import com.example.agenteval.domain.service.TaskDomainService;
@@ -68,10 +70,26 @@ public class TaskController {
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 
-    @ApiOperation("stop事件hook接口")
+    @ApiOperation("agent的stop事件hook接口")
     @PostMapping("/agent/hook/stop")
     public ResponseEntity<CommonResponse<Void>> stopHook(@Valid @RequestBody StopHookRequest stopHookRequest) {
         taskDomainService.stopHook(stopHookRequest);
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @ApiOperation("中断案例")
+    @PostMapping("/stop/case/{taskId}/{caseId}")
+    public ResponseEntity<CommonResponse<Void>> stopCase(@ApiParam(value = "任务主键Id", required = true) @PathVariable Integer taskId,
+                                                         @ApiParam(value = "案例主键Id", required = true) @PathVariable Integer caseId) {
+        taskDomainService.stopCase(taskId, caseId);
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @ApiOperation("中断案例评测")
+    @PostMapping("/stop/eval/case/{taskId}/{caseId}")
+    public ResponseEntity<CommonResponse<Void>> stopEval(@ApiParam(value = "任务主键Id", required = true) @PathVariable Integer taskId,
+                                                         @ApiParam(value = "案例主键Id", required = true) @PathVariable Integer caseId) {
+        taskDomainService.stopEval(taskId, caseId);
         return ResponseEntity.ok(CommonResponse.success(null));
     }
 }

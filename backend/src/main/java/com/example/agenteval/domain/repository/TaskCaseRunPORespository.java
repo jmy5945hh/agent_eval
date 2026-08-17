@@ -32,4 +32,6 @@ public interface TaskCaseRunPORespository extends BaseRepository<TaskCaseRunPO, 
     TaskCaseRunPO findFirstByTaskIdAndStatusAndEvalStatusOrderByCreateTimeDesc(Integer taskId, Integer status, Integer evalStatus);
 
     List<TaskCaseRunPO> findByTaskIdAndStatusNot(Integer id, Integer status);
+
+    TaskCaseRunPO findByTaskIdAndCaseId(Integer taskId, Integer caseId);
 }

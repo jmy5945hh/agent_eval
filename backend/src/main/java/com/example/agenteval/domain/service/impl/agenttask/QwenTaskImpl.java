@@ -119,8 +119,9 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         uploadAgentFileToOOS(errorLog);
         //读取jsonL
         String projectFolder = agentFinish.getCwd().replace(":\\", "--").replaceAll("\\\\", "-").replaceAll("/", "-");
-        Path sessionDir = Paths.get(System.getProperty("user.home"), ".qwen", "projects", projectFolder, "chats");
-        File sessionJsonL = sessionDir.resolve(agentFinish.getSessionId() + ".jsonl").toFile();
+        /*Path sessionDir = Paths.get(System.getProperty("user.home"), ".qwen", "projects", projectFolder, "chats");
+        File sessionJsonL = sessionDir.resolve(agentFinish.getSessionId() + ".jsonl").toFile();*/
+        File sessionJsonL = new File(agentFinish.getTranscriptPath());
         List<QwenJsonL> qwenJsonL = readAndUploadAgentJsonLFileToOOS(sessionJsonL, QwenJsonL.class);
         //统计
         QwenCaseRun qwenCaseRun = summaryStatistics(qwenJsonL);
@@ -178,6 +179,11 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         EvaluationTaskPO evaluationTaskPO = evaluationTaskPORespository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("任务不存在: " + taskId));
         //先找到任务中第一条评测的案例
         TaskCaseRunPO evalTaskCaseRun = taskCaseRunPORespository.findFirstByTaskIdAndStatusAndEvalStatusOrderByCreateTimeDesc(taskId, CaseRunStatusEnum.SUCCESS.getStatus(), CaseRunStatusEnum.QUEUED.getStatus());
+        if (ObjUtil.isNull(evalTaskCaseRun)) {
+            //针对只有一个案例，跑完后，立马停止评测
+            finishEval(taskId);
+            return AgentTaskRunReturn.builder().build();
+        }
         //agent
         AgentInfoPO agentInfoPO = agentInfoPORespository.findById(evaluationTaskPO.getAgentId()).orElseThrow(() -> new IllegalArgumentException("Agent不存在: " + evaluationTaskPO.getAgentId()));
         if (firstEval && !ObjUtil.equals(evaluationTaskPO.getModelId(), evaluationTaskPO.getScoringModelId())) {
@@ -231,6 +237,26 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         log.info("案例评测已启动, taskId:{}, caseId:{}, evalSessionId:{}", taskId, evalTaskCaseRun.getCaseId(), sessionId);
         return AgentTaskRunReturn.builder().sessionId(sessionId).taskCaseRunId(evalTaskCaseRun.getId()).build();
 
+    }
+
+    private void finishEval(Integer taskId) {
+        //评测完成
+        log.info("所有案例评测完成, 开始汇总评分, taskId:{}", taskId);
+        EvaluationTaskPO evaluationTaskPO = evaluationTaskPORespository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("任务不存在: " + taskId));
+        evaluationTaskPO.setScoringStatus(ScoringStatusEnum.SCORED.getStatus());
+        //求平均分
+        List<TaskCaseRunPO> byTaskId = taskCaseRunPORespository.findByTaskIdAndStatusNot(evaluationTaskPO.getId(), CaseRunStatusEnum.CANCELLED.getStatus());
+        BigDecimal averageScore;
+        if (byTaskId.isEmpty()) {
+            // 可根据业务逻辑设定默认值，例如 0 或 null
+            averageScore = BigDecimal.ZERO;
+        } else {
+            int totalScore = byTaskId.stream().mapToInt(item -> item.getScore().intValue()).sum();
+            averageScore = BigDecimal.valueOf(totalScore).divide(BigDecimal.valueOf(byTaskId.size()), 2, RoundingMode.HALF_UP);
+        }
+        evaluationTaskPO.setAvgScore(averageScore);
+        evaluationTaskPORespository.save(evaluationTaskPO);
+        log.info("任务评测完成, taskId:{}, 平均分:{}", evaluationTaskPO.getId(), averageScore);
     }
 
     @Override
@@ -293,23 +319,7 @@ public class QwenTaskImpl extends AgentTaskBaseAbstractService implements AgentT
         TaskCaseRunPO nextTaskCaseRun = taskCaseRunPORespository.findFirstByTaskIdAndStatusAndEvalStatusOrderByCreateTimeDesc(taskCaseRunPO.getTaskId(), CaseRunStatusEnum.SUCCESS.getStatus(), CaseRunStatusEnum.QUEUED.getStatus());
         if (ObjUtil.isNull(nextTaskCaseRun)) {
             //评测完成
-            log.info("所有案例评测完成, 开始汇总评分, taskId:{}", taskCaseRunPO.getTaskId());
-            EvaluationTaskPO evaluationTaskPO = evaluationTaskPORespository.findById(taskCaseRunPO.getTaskId()).orElseThrow(() -> new IllegalArgumentException("任务不存在: " + taskCaseRunPO.getTaskId()));
-            evaluationTaskPO.setScoringStatus(ScoringStatusEnum.SCORED.getStatus());
-            //求平均分
-            List<TaskCaseRunPO> byTaskId = taskCaseRunPORespository.findByTaskIdAndStatusNot(evaluationTaskPO.getId(), CaseRunStatusEnum.CANCELLED.getStatus());
-            BigDecimal averageScore;
-            if (byTaskId.isEmpty()) {
-                // 可根据业务逻辑设定默认值，例如 0 或 null
-                averageScore = BigDecimal.ZERO;
-            } else {
-                int totalScore = byTaskId.stream().mapToInt(item -> item.getScore().intValue()).sum();
-                averageScore = BigDecimal.valueOf(totalScore)
-                        .divide(BigDecimal.valueOf(byTaskId.size()), 2, RoundingMode.HALF_UP);
-            }
-            evaluationTaskPO.setAvgScore(averageScore);
-            evaluationTaskPORespository.save(evaluationTaskPO);
-            log.info("任务评测完成, taskId:{}, 平均分:{}", evaluationTaskPO.getId(), averageScore);
+            finishEval(taskCaseRunPO.getTaskId());
             return;
         }
         evalCase(taskCaseRunPO.getTaskId(), false);

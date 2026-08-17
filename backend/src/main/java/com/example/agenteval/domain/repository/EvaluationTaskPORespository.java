@@ -1,5 +1,6 @@
 package com.example.agenteval.domain.repository;
 
+import com.example.agenteval.domain.model.AgentScorePO;
 import com.example.agenteval.domain.model.EvaluationTaskPO;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -65,4 +66,10 @@ public interface EvaluationTaskPORespository extends BaseRepository<EvaluationTa
     Double findAvgScoreOfCompletedTasksInLast30Days(@Param("status") int status,
                                                     @Param("startTime") LocalDateTime startTime);
 
+
+    EvaluationTaskPO findTopFirstByStatusOrderByUpdateTimeDesc(int status);
+
+    @Query("SELECT new com.example.agenteval.domain.model.AgentScorePO(e.agentId, COUNT(e), SUM(e.avgScore)) " +
+            "FROM EvaluationTaskPO e GROUP BY e.agentId")
+    List<AgentScorePO> findAgentScore();
 }

@@ -1,6 +1,8 @@
 package com.example.agenteval.domain.service;
 
 import com.example.agenteval.application.dto.request.cases.CaseListRequest;
+import com.example.agenteval.application.dto.request.task.CreateTaskRequest;
+import com.example.agenteval.application.dto.request.task.StopHookRequest;
 import com.example.agenteval.application.dto.response.task.*;
 import org.springframework.data.domain.Page;
 
@@ -56,4 +58,19 @@ public interface TaskDomainService {
      * @param stopHookRequest
      */
     void stopHook(@Valid StopHookRequest stopHookRequest);
+
+    /**
+     * 中断案例
+     *
+     * @param caseId
+     */
+    void stopCase(Integer taskId, Integer caseId);
+
+    /**
+     * 中断案例评测
+     *
+     * @param taskId
+     * @param caseId
+     */
+    void stopEval(Integer taskId, Integer caseId);
 }

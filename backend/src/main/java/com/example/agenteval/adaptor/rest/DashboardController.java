@@ -1,23 +1,21 @@
 package com.example.agenteval.adaptor.rest;
 
 import com.example.agenteval.application.dto.response.CommonResponse;
-import com.example.agenteval.domain.model.EvaluationTaskPO;
-import com.example.agenteval.domain.model.TaskCaseRunPO;
-import com.example.agenteval.domain.repository.EvaluationCasePORespository;
-import com.example.agenteval.domain.repository.EvaluationTaskPORespository;
-import com.example.agenteval.domain.repository.TaskCaseRunPORespository;
+import com.example.agenteval.application.dto.response.dashboard.AgentLeaderboardResponse;
+import com.example.agenteval.application.dto.response.dashboard.EvalTaskCountingResponse;
+import com.example.agenteval.application.dto.response.dashboard.LastTaskInfoResponse;
+import com.example.agenteval.domain.service.DashboardService;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 工作台控制器，提供聚合统计数据，供 DashboardPage 的指标卡片、Agent 排行榜、最近测评摘要使用。
@@ -31,36 +29,24 @@ import java.util.Map;
 @ApiSupport(order = 8)
 public class DashboardController {
 
-    private final EvaluationTaskPORespository taskRepository;
-    private final EvaluationCasePORespository caseRepository;
-    private final TaskCaseRunPORespository caseRunRepository;
+    private final DashboardService dashboardService;
 
-    /**
-     * 查询工作台聚合统计数据：各状态任务数、案例总数、成功率、平均分、Agent 排名。
-     */
-    @GetMapping("/stats")
-    public CommonResponse<Map<String, Object>> getStats() {
-        List<EvaluationTaskPO> allTasks = taskRepository.findAll();
-        int total = allTasks.size();
-        int running = (int) allTasks.stream().filter(t -> "running".equals(t.getStatus())).count();
-        int completed = (int) allTasks.stream().filter(t -> "completed".equals(t.getStatus())).count();
-        int cancelled = (int) allTasks.stream().filter(t -> "cancelled".equals(t.getStatus())).count();
+    @ApiOperation("获取评测任务统计信息")
+    @GetMapping("/counting")
+    public ResponseEntity<CommonResponse<EvalTaskCountingResponse>> EvalTaskCounting() {
+        return ResponseEntity.ok(CommonResponse.success(dashboardService.evalTaskCounting()));
+    }
 
-        List<TaskCaseRunPO> allRuns = caseRunRepository.findAll();
-        long totalRuns = allRuns.size();
-        long successRuns = allRuns.stream().filter(r -> "success".equals(r.getStatus())).count();
-        double successRate = totalRuns > 0 ? Math.round(successRuns * 1000.0 / totalRuns) / 10.0 : 0.0;
+    @ApiOperation("获取最后一个评测任务的信息")
+    @GetMapping("/last/task-info")
+    public ResponseEntity<CommonResponse<LastTaskInfoResponse>> lastTaskInfo() {
+        return ResponseEntity.ok(CommonResponse.success(dashboardService.lastTaskInfo()));
+    }
 
-        Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalTasks", total);
-        stats.put("runningTasks", running);
-        stats.put("completedTasks", completed);
-        stats.put("cancelledTasks", cancelled);
-        stats.put("totalCases", caseRepository.count());
-        stats.put("avgScore", 0.0);
-        stats.put("successRate", successRate);
-        stats.put("agentRankings", new ArrayList<>());
 
-        return CommonResponse.success(stats);
+    @ApiOperation("获取Agent分数排行榜")
+    @GetMapping("/agent/leaderboard")
+    public ResponseEntity<CommonResponse<List<AgentLeaderboardResponse>>> agentLeaderboard() {
+        return ResponseEntity.ok(CommonResponse.success(dashboardService.agentLeaderboard()));
     }
 }

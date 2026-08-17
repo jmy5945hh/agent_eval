@@ -1,4 +1,4 @@
-package com.example.agenteval.application.dto.response.task;
+package com.example.agenteval.application.dto.request.task;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

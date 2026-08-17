@@ -1,4 +1,4 @@
-package com.example.agenteval.application.dto.response.task;
+package com.example.agenteval.application.dto.request.task;
 
 import cn.hutool.core.annotation.Alias;
 import com.fasterxml.jackson.annotation.JsonProperty;

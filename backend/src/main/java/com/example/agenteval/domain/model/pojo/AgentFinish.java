@@ -25,4 +25,6 @@ public class AgentFinish {
 
     private String lastAssistantMessage;
 
+    private String transcriptPath;
+
 }
